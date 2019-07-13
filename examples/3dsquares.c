@@ -14,6 +14,7 @@
 #define OFFSET_Z STRIDE_Z
 
 #define DIMMING 2048.0f
+#define FOCUS 256
 
 void tic(void) {
     if(nyx_key_pressed(NYX_KEY_RIGHT))
@@ -73,7 +74,7 @@ int main(void) {
     nyx_set_tic_handler(tic);
     nyx_set_event_handler(handle_event);
     nyx_set_renderer(render);
-    camera = nyx_trans_simple_camera(NYX_VECTOR_ZERO, 256);
+    camera = nyx_trans_simple_camera(NYX_VECTOR_ZERO, FOCUS);
     nyx_set_view_transform(camera);
     nyx_start();
     return 0;
