@@ -1,2 +1,0 @@
-# nyx
-alternative game engine

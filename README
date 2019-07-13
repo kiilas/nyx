@@ -1,0 +1,24 @@
+ABOUT
+-----
+
+nyx is an alternative game engine focused on retro style and pixel art games.
+
+This repository is just a dump of what is currently heavy work in progress.
+
+Everything is broken, undocumented, untested, and unoptimised. Do not use in
+production or anywhere else. Do not complain.
+
+INSTALLATION
+------------
+
+If you still want to play with it, you need to know how to build and install a
+library for your operating system. There are build scripts for your
+convenience. For optimal performance you may want to build the library (for
+example using the build.sh script) with the following optimisation flags:
+
+-O3 -DNDEBUG -march=native -fomit-frame-pointer
+
+AUTHORS
+-------
+
+kiilas
