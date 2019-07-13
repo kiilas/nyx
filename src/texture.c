@@ -35,6 +35,8 @@ static void render_texel(int px, int py, NYX_TEXEL texel) {
     float normval;
     int val;
 
+    if(texel.trans)
+        return;
     normlen = 1073741824 - texel.nx*texel.nx - texel.ny*texel.ny;
     if(normlen < 0)
         normlen = 0;
@@ -43,8 +45,7 @@ static void render_texel(int px, int py, NYX_TEXEL texel) {
     if(val > 255)
         val = 255;
     NYX_COLOR c = {texel.ramp, val};
-    if(!texel.trans)
-        nyx_draw_pixel(px, py, c);
+    nyx_draw_pixel(px, py, c);
 }
 
 static NYX_TEXEL texel_normal(NYX_TEXEL texel, float nx, float ny) {
