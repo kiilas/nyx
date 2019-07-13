@@ -38,8 +38,8 @@ static void render_texel(int px, int py, NYX_TEXEL texel) {
     normlen = 1073741824 - texel.nx*texel.nx - texel.ny*texel.ny;
     if(normlen < 0)
         normlen = 0;
-    normval = sqrtf(normlen / 1073741824.0);
-    val = texel.value * normval * 1.0;
+    normval = sqrtf(normlen / 1073741824.0f);
+    val = texel.value * normval;
     if(val > 255)
         val = 255;
     NYX_COLOR c = {texel.ramp, val};
