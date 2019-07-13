@@ -2,7 +2,7 @@
 
 #define BACKGROUND (NYX_COLOR){.ramp=1, .value=64}
 
-#define NUM_TEXTURES 16
+#define NUM_TEXTURES 64
 #define TEXTURE_SIZE 32
 
 int ids[NUM_TEXTURES];
