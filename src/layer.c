@@ -4,7 +4,7 @@
 
 #define MAX_LAYERS 256
 
-#define LAYER_DEFS {.active=true, .transform={.type=NYX_TRANSFORM_TYPE_NONE}}
+#define LAYER_DEFS {.active=true, .transform=NYX_TRANSFORM_IDENTITY}
 
 struct layer {
     bool active;
