@@ -1,6 +1,7 @@
 #ifndef NYX_H
 #define NYX_H
 
+#include "nyx/bit.h"
 #include "nyx/color.h"
 #include "nyx/draw.h"
 #include "nyx/error.h"
@@ -11,6 +12,7 @@
 #include "nyx/layer.h"
 #include "nyx/linear.h"
 #include "nyx/meta.h"
+#include "nyx/pack.h"
 #include "nyx/random.h"
 #include "nyx/symmetry.h"
 #include "nyx/texture.h"
