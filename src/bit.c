@@ -1,5 +1,64 @@
 #include "nyx/nyx.h"
 
+int nyx_get_bit_unsafe(const void *bits, uint64_t bit) {
+    const uint8_t *byte = (uint8_t *)bits + (bit/8);
+
+    return *byte >> bit%8;
+}
+
+int nyx_get_bit(const void *bits, uint64_t bits_len, uint64_t bit, int *value) {
+    if(bit >= bits_len)
+        return -1;
+    *value = nyx_get_bit_unsafe(bits, bit);
+    return 0;
+}
+
+void nyx_set_bit_unsafe(void *bits, uint64_t bit, int value) {
+    uint8_t *byte = (uint8_t *)bits + (bit/8);
+
+    *byte &= ~(1 << bit%8);
+    *byte |= value%2 << bit%8;
+}
+
+int nyx_set_bit(void *bits, uint64_t bits_len, uint64_t bit, int value) {
+    if(bit >= bits_len)
+        return -1;
+    nyx_set_bit_unsafe(bits, bit, value);
+    return 0;
+}
+
+void nyx_set_bits_unsafe(void *bits, uint64_t offset, int value, uint64_t len) {
+    uint64_t i;
+
+    for(i=0; i<len; ++i)
+        nyx_set_bit_unsafe(bits, offset+i, value);
+}
+
+int nyx_set_bits(void *bits, uint64_t bits_len, uint64_t offset, int value, uint64_t len) {
+    if(offset+len > bits_len && len)
+        return -1;
+    nyx_set_bits_unsafe(bits, offset, value, len);
+    return 0;
+}
+
+void nyx_copy_bits_unsafe(void *restrict dst_bits, uint64_t offset, const void *src, uint64_t len) {
+    uint64_t i;
+
+    for(i=0; i<len; ++i)
+    {
+        int value = nyx_get_bit_unsafe(src, i);
+
+        nyx_set_bit_unsafe(dst_bits, offset+i, value);
+    }
+}
+
+int nyx_copy_bits(void *restrict dst_bits, uint64_t dst_len, uint64_t offset, const void *src, uint64_t len) {
+    if(offset+len > dst_len && len)
+        return -1;
+    nyx_copy_bits_unsafe(dst_bits, offset, src, len);
+    return 0;
+}
+
 void nyx_i16_to_bytes(uint8_t *bytes, int16_t i16) {
     bytes[0] = i16 & 0xff;
     bytes[1] = i16 >> 8 & 0xff;
