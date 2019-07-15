@@ -12,8 +12,8 @@ int nyx_set_bit(void *bits, uint64_t bits_len, uint64_t bit, int value);
 void nyx_set_bits_unsafe(void *bits, uint64_t offset, int value, uint64_t len);
 int nyx_set_bits(void *bits, uint64_t bits_len, uint64_t offset, int value, uint64_t len);
 
-void nyx_copy_bits_unsafe(void *restrict dst_bits, uint64_t offset, const void *src, uint64_t len);
-int nyx_copy_bits(void *restrict dst_bits, uint64_t dst_len, uint64_t offset, const void *src, uint64_t len);
+void nyx_copy_bits_unsafe(void *restrict dst, uint64_t dst_offset, const void *src, uint64_t src_offset, uint64_t len);
+int nyx_copy_bits(void *restrict dst, uint64_t dst_len, uint64_t dst_offset, const void *src, uint64_t src_len, uint64_t src_offset, uint64_t len);
 
 void nyx_i16_to_bytes(uint8_t *bytes, int16_t i16);
 void nyx_u16_to_bytes(uint8_t *bytes, uint16_t u16);

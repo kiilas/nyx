@@ -8,7 +8,7 @@ int nyx_pack_bit(void *buffer, uint64_t buf_len, uint64_t *offset, int bit) {
 }
 
 int nyx_pack_bits(void *restrict buffer, uint64_t buf_len, uint64_t *offset, const void *bits, uint64_t bits_len) {
-    if(nyx_copy_bits(buffer, buf_len, *offset, bits, bits_len))
+    if(nyx_copy_bits(buffer, buf_len, *offset, bits, bits_len, 0, bits_len))
         return -1;
     *offset += bits_len;
     return 0;
@@ -19,6 +19,27 @@ int nyx_pack_zeros(void *buffer, uint64_t buf_len, uint64_t *offset, uint64_t le
         return -1;
     *offset += len;
     return 0;
+}
+
+int nyx_unpack_bit(const void *buffer, uint64_t buf_len, uint64_t *offset, int *bit) {
+    if(nyx_get_bit(buffer, buf_len, *offset, bit))
+        return -1;
+    ++*offset;
+    return 0;
+}
+
+int nyx_unpack_bits(const void *buffer, uint64_t buf_len, uint64_t *offset, void *restrict bits, uint64_t bit_len) {
+    if(nyx_copy_bits(bits, bit_len, 0, buffer, buf_len, *offset, bit_len))
+        return -1;
+    *offset += bit_len;
+    return 0;
+}
+
+int nyx_unpack_zeros(const void *buffer, uint64_t buf_len, uint64_t *offset, uint64_t *len) {
+    for(*len=0; *len+*offset < buf_len; ++*len)
+        if(nyx_get_bit_unsafe(buffer, *len+*offset))
+            return 0;
+    return -1;
 }
 
 int nyx_pack_i8(void *buffer, uint64_t buf_len, uint64_t *offset, int8_t i8) {

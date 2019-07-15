@@ -41,21 +41,21 @@ int nyx_set_bits(void *bits, uint64_t bits_len, uint64_t offset, int value, uint
     return 0;
 }
 
-void nyx_copy_bits_unsafe(void *restrict dst_bits, uint64_t offset, const void *src, uint64_t len) {
+void nyx_copy_bits_unsafe(void *restrict dst, uint64_t dst_offset, const void *src, uint64_t src_offset, uint64_t len) {
     uint64_t i;
 
     for(i=0; i<len; ++i)
     {
-        int value = nyx_get_bit_unsafe(src, i);
+        int value = nyx_get_bit_unsafe(src, src_offset+i);
 
-        nyx_set_bit_unsafe(dst_bits, offset+i, value);
+        nyx_set_bit_unsafe(dst, dst_offset+i, value);
     }
 }
 
-int nyx_copy_bits(void *restrict dst_bits, uint64_t dst_len, uint64_t offset, const void *src, uint64_t len) {
-    if(offset+len > dst_len && len)
+int nyx_copy_bits(void *restrict dst, uint64_t dst_len, uint64_t dst_offset, const void *src, uint64_t src_len, uint64_t src_offset, uint64_t len) {
+    if((src_offset+len > src_len || dst_offset+len > dst_len) && len)
         return -1;
-    nyx_copy_bits_unsafe(dst_bits, offset, src, len);
+    nyx_copy_bits_unsafe(dst, dst_offset, src, src_offset, len);
     return 0;
 }
 
