@@ -38,7 +38,10 @@ int nyx_unpack_bits(const void *buffer, uint64_t buf_len, uint64_t *offset, void
 int nyx_unpack_zeros(const void *buffer, uint64_t buf_len, uint64_t *offset, uint64_t *len) {
     for(*len=0; *len+*offset < buf_len; ++*len)
         if(nyx_get_bit_unsafe(buffer, *len+*offset))
+        {
+            *offset += *len;
             return 0;
+        }
     return -1;
 }
 
