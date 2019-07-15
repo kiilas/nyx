@@ -1,30 +1,30 @@
 #include "nyx/nyx.h"
 
-void nyx_i16_to_bytes(int16_t i16, uint8_t *bytes) {
+void nyx_i16_to_bytes(uint8_t *bytes, int16_t i16) {
     bytes[0] = i16 & 0xff;
     bytes[1] = i16 >> 8 & 0xff;
 }
 
-void nyx_u16_to_bytes(uint16_t u16, uint8_t *bytes) {
+void nyx_u16_to_bytes(uint8_t *bytes, uint16_t u16) {
     bytes[0] = u16 & 0xff;
     bytes[1] = u16 >> 8 & 0xff;
 }
 
-void nyx_i32_to_bytes(int32_t i32, uint8_t *bytes) {
+void nyx_i32_to_bytes(uint8_t *bytes, int32_t i32) {
     bytes[0] = i32 & 0xff;
     bytes[1] = i32 >> 8 & 0xff;
     bytes[2] = i32 >> 16 & 0xff;
     bytes[3] = i32 >> 24 & 0xff;
 }
 
-void nyx_u32_to_bytes(uint32_t u32, uint8_t *bytes) {
+void nyx_u32_to_bytes(uint8_t *bytes, uint32_t u32) {
     bytes[0] = u32 & 0xff;
     bytes[1] = u32 >> 8 & 0xff;
     bytes[2] = u32 >> 16 & 0xff;
     bytes[3] = u32 >> 24 & 0xff;
 }
 
-void nyx_i64_to_bytes(int64_t i64, uint8_t *bytes) {
+void nyx_i64_to_bytes(uint8_t *bytes, int64_t i64) {
     bytes[0] = i64 & 0xff;
     bytes[1] = i64 >> 8 & 0xff;
     bytes[2] = i64 >> 16 & 0xff;
@@ -35,7 +35,7 @@ void nyx_i64_to_bytes(int64_t i64, uint8_t *bytes) {
     bytes[7] = i64 >> 56 & 0xff;
 }
 
-void nyx_u64_to_bytes(uint64_t u64, uint8_t *bytes) {
+void nyx_u64_to_bytes(uint8_t *bytes, uint64_t u64) {
     bytes[0] = u64 & 0xff;
     bytes[1] = u64 >> 8 & 0xff;
     bytes[2] = u64 >> 16 & 0xff;
@@ -46,7 +46,7 @@ void nyx_u64_to_bytes(uint64_t u64, uint8_t *bytes) {
     bytes[7] = u64 >> 56 & 0xff;
 }
 
-int16_t nyx_bytes_to_i16(uint8_t *bytes) {
+int16_t nyx_bytes_to_i16(const uint8_t *bytes) {
     int16_t i16;
 
     i16 = (int16_t)bytes[0];
@@ -54,7 +54,7 @@ int16_t nyx_bytes_to_i16(uint8_t *bytes) {
     return i16;
 }
 
-uint16_t nyx_bytes_to_u16(uint8_t *bytes) {
+uint16_t nyx_bytes_to_u16(const uint8_t *bytes) {
     uint16_t u16;
 
     u16 = (uint16_t)bytes[0];
@@ -62,7 +62,7 @@ uint16_t nyx_bytes_to_u16(uint8_t *bytes) {
     return u16;
 }
 
-int32_t nyx_bytes_to_i32(uint8_t *bytes) {
+int32_t nyx_bytes_to_i32(const uint8_t *bytes) {
     int32_t i32;
 
     i32 = (int32_t)bytes[0];
@@ -72,7 +72,7 @@ int32_t nyx_bytes_to_i32(uint8_t *bytes) {
     return i32;
 }
 
-uint32_t nyx_bytes_to_u32(uint8_t *bytes) {
+uint32_t nyx_bytes_to_u32(const uint8_t *bytes) {
     uint32_t u32;
 
     u32 = (uint32_t)bytes[0];
@@ -82,7 +82,7 @@ uint32_t nyx_bytes_to_u32(uint8_t *bytes) {
     return u32;
 }
 
-int64_t nyx_bytes_to_i64(uint8_t *bytes) {
+int64_t nyx_bytes_to_i64(const uint8_t *bytes) {
     int64_t i64;
 
     i64 = (int64_t)bytes[0];
@@ -96,7 +96,7 @@ int64_t nyx_bytes_to_i64(uint8_t *bytes) {
     return i64;
 }
 
-uint64_t nyx_bytes_to_u64(uint8_t *bytes) {
+uint64_t nyx_bytes_to_u64(const uint8_t *bytes) {
     uint64_t u64;
 
     u64 = (uint64_t)bytes[0];
