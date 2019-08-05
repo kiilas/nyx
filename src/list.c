@@ -7,16 +7,6 @@ struct NYX_LIST {
     void   *data;
 };
 
-NYX_LIST *nyx_list_init(size_t elem_size) {
-    NYX_LIST *list;
-
-    list = calloc(1, sizeof(NYX_LIST));
-    if(!list)
-        return 0;
-    list->elem_size = elem_size;
-    return list;
-}
-
 static int set_capacity(NYX_LIST *list, size_t capacity) {
     void *new_data;
     
@@ -51,6 +41,42 @@ static int grow(NYX_LIST *list) {
     return grow_to(list, list->len + 1);
 }
 
+size_t _nyx_list_index_sorted(const NYX_LIST *list, const void *elem, int *exists) {
+    size_t min_idx = 0;
+    size_t max_idx = list->len;
+
+    while(min_idx < max_idx)
+    {
+        size_t avg = (min_idx + max_idx) / 2;
+        const void *pivot = nyx_list_get_ptr_unsafe(list, avg);
+        int cmp = memcmp(elem, pivot, list->elem_size);
+
+        if(cmp < 0)
+            max_idx = avg;
+        else if(!cmp)
+        {
+            if(exists)
+                *exists = 1;
+            return avg;
+        }
+        else
+            min_idx = avg + 1;
+    }
+    if(exists)
+        *exists = 0;
+    return min_idx;
+}
+
+NYX_LIST *nyx_list_init(size_t elem_size) {
+    NYX_LIST *list;
+
+    list = calloc(1, sizeof(NYX_LIST));
+    if(!list)
+        return 0;
+    list->elem_size = elem_size;
+    return list;
+}
+
 void nyx_destroy_list(NYX_LIST *list) {
     if(!list)
         return;
@@ -60,6 +86,10 @@ void nyx_destroy_list(NYX_LIST *list) {
 
 void *nyx_list_get_ptr_unsafe(const NYX_LIST *list, size_t idx) {
     return (char *)list->data + idx*list->elem_size;
+}
+
+void nyx_list_set_unsafe(NYX_LIST *list, size_t idx, const void *elem) {
+    memcpy(nyx_list_get_ptr_unsafe(list, idx), elem, list->elem_size);
 }
 
 int nyx_list_insert(NYX_LIST *list, size_t idx, const void *elem) {
@@ -77,8 +107,18 @@ int nyx_list_insert(NYX_LIST *list, size_t idx, const void *elem) {
 int nyx_list_insert_sorted(NYX_LIST *list, const void *elem) {
     size_t idx;
     
-    idx = nyx_list_sorted_index(list, elem);
+    idx = _nyx_list_index_sorted(list, elem, 0);
     return nyx_list_insert(list, idx, elem);
+}
+
+int nyx_list_insert_sorted_unique(NYX_LIST *list, const void *elem) {
+    size_t idx;
+    int exists;
+
+    idx = _nyx_list_index_sorted(list, elem, &exists);
+    if(!exists)
+        return nyx_list_insert(list, idx, elem);
+    return 0;
 }
 
 int nyx_list_remove(NYX_LIST *list, size_t idx) {
@@ -89,25 +129,4 @@ int nyx_list_remove(NYX_LIST *list, size_t idx) {
             nyx_list_get_ptr_unsafe(list, idx+1),
             (list->len-idx) * list->elem_size);
     return 0;
-}
-
-size_t nyx_list_sorted_index(const NYX_LIST *list, const void *elem) {
-    size_t min_idx = 0;
-    size_t max_idx = list->len;
-
-    while(min_idx < max_idx)
-    {
-        size_t avg = (min_idx + max_idx) / 2;
-        const void *pivot = nyx_list_get_ptr_unsafe(list, avg);
-
-        int cmp = memcmp(elem, pivot, list->elem_size);
-
-        if(cmp < 0)
-            max_idx = avg;
-        else if(!cmp)
-            return avg;
-        else
-            min_idx = avg + 1;
-    }
-    return min_idx;
 }

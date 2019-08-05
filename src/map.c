@@ -1,5 +1,7 @@
 #include "nyx/nyx.h"
 
+#include "_list.h"
+
 struct NYX_MAP {
     size_t key_size;
     size_t value_size;
@@ -33,12 +35,17 @@ void nyx_destroy_map(NYX_MAP *map) {
     free(map);
 }
 
-int nyx_map_insert(const NYX_MAP *map, void *key, void *value) {
-    int idx;
-    
-    // TODO what if key already exists
-    idx = nyx_list_insert_sorted(map->keys, key);
-    if(idx < 0)
+int nyx_map_insert(const NYX_MAP *map, const void *key, const void *value) {
+    size_t idx;
+    int exists;
+
+    idx = _nyx_list_index_sorted(map->keys, key, &exists);
+    if(exists)
+    {
+        nyx_list_set_unsafe(map->values, idx, value);
+        return 0;
+    }
+    if(nyx_list_insert(map->keys, idx, key))
         return -1;
     if(nyx_list_insert(map->values, idx, value))
     {
