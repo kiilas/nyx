@@ -1,6 +1,7 @@
 #include "nyx/nyx.h"
 
 #include "_graphics.h"
+#include "_mask.h"
 #include "_texture.h"
 
 #define PIPELINE_LENGTH 4
@@ -76,6 +77,21 @@ static int pipeline_texture(NYX_VECTOR v, int id, uint8_t idx) {
     return -1;
 }
 
+static int pipeline_mask(NYX_VECTOR v, NYX_MASK m, NYX_COLOR color, uint8_t idx) {
+    if(idx == pipeline_length)
+        return _render_mask(v.a[0], v.a[1], m, color);
+    switch(pipeline[idx].type) {
+        NYX_VECTOR v_new;
+
+        case NYX_TRANSFORM_TYPE_INBOUNDS:
+        case NYX_TRANSFORM_TYPE_NONE:
+        case NYX_TRANSFORM_TYPE_TRANS:
+            v_new = nyx_transform(v, pipeline+idx);
+            return pipeline_mask(v_new, m, color, idx+1);
+    }
+    return -1;
+}
+
 void _update_pipeline(void) {
     pipeline_length = 0;
 
@@ -95,4 +111,8 @@ int _pipeline_rect(NYX_VECTOR v, int32_t w, int32_t h, NYX_COLOR color) {
 
 int _pipeline_texture(NYX_VECTOR v, int id) {
     return pipeline_texture(v, id, 0);
+}
+
+int _pipeline_mask(NYX_VECTOR v, NYX_MASK m, NYX_COLOR color) {
+    return pipeline_mask(v, m, color, 0);
 }

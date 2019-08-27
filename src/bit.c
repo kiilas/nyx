@@ -1,9 +1,9 @@
 #include "nyx/nyx.h"
 
 int nyx_get_bit_unsafe(const void *bits, uint64_t bit) {
-    const uint8_t *byte = (uint8_t *)bits + (bit/8);
+    const uint8_t *byte = (uint8_t *)bits + bit/8;
 
-    return *byte >> bit%8;
+    return *byte >> bit%8 & 1;
 }
 
 int nyx_get_bit(const void *bits, uint64_t bits_len, uint64_t bit, int *value) {

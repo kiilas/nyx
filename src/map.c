@@ -35,6 +35,16 @@ void nyx_destroy_map(NYX_MAP *map) {
     free(map);
 }
 
+void *nyx_map_get(const NYX_MAP *map, const void *key) {
+    size_t idx;
+    int exists;
+
+    idx = _nyx_list_index_sorted(map->keys, key, &exists);
+    if(!exists)
+        return 0;
+    return nyx_list_get_ptr_unsafe(map->values, idx);
+}
+
 int nyx_map_insert(const NYX_MAP *map, const void *key, const void *value) {
     size_t idx;
     int exists;

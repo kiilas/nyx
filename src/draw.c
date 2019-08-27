@@ -2,6 +2,7 @@
 
 #include "_graphics.h"
 #include "_layer.h"
+#include "_mask.h"
 #include "_pipeline.h"
 #include "_texture.h"
 
@@ -53,4 +54,44 @@ int nyx_draw_texture(int32_t x, int32_t y, int id) {
 
 int nyx_draw_texturev(NYX_VECTOR v, int id) {
     return _pipeline_texture(v, id);
+}
+
+int nyx_draw_char(int32_t x, int32_t y, char c, NYX_COLOR color) {
+    return nyx_draw_unichar(x, y, (uint8_t)c, color);
+}
+
+int nyx_draw_unichar(int32_t x, int32_t y, uint32_t code, NYX_COLOR color) {
+    const void *bits = nyx_glyph_bits(code);
+    int w;
+    int h;
+    NYX_MASK m;
+    NYX_VECTOR v;
+
+    if(nyx_active_font() < 0)
+        return -1;
+    if(!bits)
+        // if undefined glyph, try to render 0x00 instead
+        return nyx_draw_unichar(x, y, 0, color);
+    w = nyx_glyph_width(code);
+    h = nyx_font_height();
+    v = nyx_vector(x, y);
+    m = (NYX_MASK){.w=w, .h=h, .bits=(void *)bits};
+    return _pipeline_mask(v, m, color);
+}
+
+int nyx_draw_cstring(int32_t x, int32_t y, const char *str, size_t n, NYX_COLOR color) {
+    size_t idx;
+
+    for(idx=0; idx<n; ++idx)
+    {
+        uint32_t code = str[idx];
+
+        if(!code)
+            break;
+        if(nyx_draw_char(x, y, code, color))
+            return -1;
+        x += nyx_glyph_width(code);
+        x += nyx_font_h_spacing();
+    }
+    return 0;
 }

@@ -4,8 +4,6 @@
 
 #include "SDL2/SDL_image.h"
 
-#include <stdio.h>
-
 #define MAX_FONTS 256
 
 struct kerning_key {
@@ -19,7 +17,7 @@ struct kerning_data {
 
 struct glyph {
     uint16_t  w;
-    void     *bitfield;
+    void     *bits;
 };
 
 struct NYX_FONT {
@@ -34,6 +32,8 @@ struct NYX_FONT {
 };
 
 static NYX_FONT *fonts[MAX_FONTS];
+
+static int active_font = -1;
 
 static float default_h_spacing = DEFAULT_FONT_H_SPACING;
 static float default_v_spacing = DEFAULT_FONT_V_SPACING;
@@ -78,7 +78,7 @@ static int next_glyph(const NYX_BITMAP *bitmap, uint32_t border_color, int *x, i
     return 0;
 }
 
-static int add_glyph_data(NYX_FONT *f, uint32_t code, int w, int h, void *bitfield) {
+static int add_glyph_data(NYX_FONT *f, uint32_t code, int w, int h, void *bits) {
     struct glyph glyph;
 
     if(!f)
@@ -93,45 +93,45 @@ static int add_glyph_data(NYX_FONT *f, uint32_t code, int w, int h, void *bitfie
         f->glyph_w = w;
     }
     glyph.w = w;
-    glyph.bitfield = bitfield;
+    glyph.bits = bits;
     // do we care about endianness?
     if(nyx_map_insert(f->glyphs, &code, &glyph))
         return -1;
     return 0;
 }
 
-static void *glyph_bitfield(const NYX_BITMAP *bitmap, int x, int y, int w, int h) {
-    void *bitfield;
+static void *glyph_bits(const NYX_BITMAP *bitmap, int x, int y, int w, int h) {
+    void *bits;
     int cx;
     int cy;
 
-    bitfield = malloc((w*h + 7) / 8);
-    if(!bitfield)
+    bits = malloc((w*h + 7) / 8);
+    if(!bits)
         return 0;
     for(cy=0; cy<h; ++cy)
         for(cx=0; cx<w; ++cx)
         {
             bool value = nyx_get_bitmap_pixel_alpha_unsafe(bitmap, x+cx, y+cy) == 0xff;
 
-            nyx_set_bit_unsafe(bitfield, cx+cy*w, value);
+            nyx_set_bit_unsafe(bits, cx+cy*w, value);
         }
-    return bitfield;
+    return bits;
 }
 
 static int add_glyph_rect(NYX_FONT *f, const NYX_BITMAP *bitmap, int x, int y, int w, int h, uint32_t code) {
-    void *bitfield;
+    void *bits;
     int res;
 
     if(!f)
         return -1;
     if(!bitmap)
         return -1;
-    bitfield = glyph_bitfield(bitmap, x, y, w, h);
-    if(!bitfield)
+    bits = glyph_bits(bitmap, x, y, w, h);
+    if(!bits)
         return -1;
-    res = add_glyph_data(f, code, w, h, bitfield);
+    res = add_glyph_data(f, code, w, h, bits);
     if(res)
-        free(bitfield);
+        free(bits);
     return res;
 }
 
@@ -198,6 +198,18 @@ static NYX_FONT *from_bitmap(const NYX_BITMAP *bitmap) {
     return f;
 }
 
+static NYX_FONT *get_active_font(void) {
+    if(active_font < 0)
+        return 0;
+    return fonts[active_font];
+}
+
+static struct glyph *get_glyph(const NYX_FONT *f, uint32_t code) {
+    if(!f)
+        return 0;
+    return nyx_map_get(f->glyphs, &code);
+}
+
 int nyx_register_font(NYX_FONT *f) {
     int idx;
 
@@ -238,4 +250,59 @@ int nyx_import_font_from_bitmap(const NYX_BITMAP *bitmap) {
     if(!f)
         return -1;
     return nyx_register_font(f);
+}
+
+int nyx_select_font(int idx) {
+    if(idx < 0 || idx >= MAX_FONTS)
+        return -1;
+    if(!fonts[idx])
+        return -1;
+    active_font = idx;
+    return 0;
+}
+
+int nyx_active_font(void) {
+    return active_font;
+}
+
+int nyx_font_height(void) {
+    const NYX_FONT *f = get_active_font();
+
+    if(!f)
+        return -1;
+    return f->glyph_h;
+}
+
+int nyx_font_h_spacing(void) {
+    const NYX_FONT *f = get_active_font();
+
+    if(!f)
+        return -1;
+    return f->h_spacing;
+}
+
+int nyx_glyph_width(uint32_t code) {
+    const NYX_FONT *f = get_active_font();
+    const struct glyph *g;
+
+    if(!f)
+        return -1;
+    if(f->monospaced)
+        return f->glyph_w;
+    g = get_glyph(f, code);
+    if(!g)
+        return -1;
+    return g->w;
+}
+
+const void *nyx_glyph_bits(uint32_t code) {
+    const NYX_FONT *f = get_active_font();
+    const struct glyph *g;
+
+    if(!f)
+        return 0;
+    g = get_glyph(f, code);
+    if(!g)
+        return 0;
+    return g->bits;
 }
