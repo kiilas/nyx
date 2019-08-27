@@ -6,5 +6,6 @@ void _update_pipeline(void);
 int _pipeline_pixel(NYX_VECTOR v, NYX_COLOR color);
 int _pipeline_rect(NYX_VECTOR v, int32_t w, int32_t h, NYX_COLOR color);
 int _pipeline_texture(NYX_VECTOR v, int id);
+int _pipeline_mask(NYX_VECTOR v, NYX_MASK m, NYX_COLOR color);
 
 #endif

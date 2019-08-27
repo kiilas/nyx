@@ -334,3 +334,7 @@ NYX_COLOR nyx_get_background_color(void) {
 void nyx_set_background_color(NYX_COLOR color) {
     background_color = color;
 }
+
+void nyx_screen_overlap(int x1, int y1, int x2, int y2, int *nx1, int *ny1, int *nx2, int *ny2) {
+    nyx_overlap2d(x1, y1, x2, y2, 0, 0, nyx_width(), nyx_height(), nx1, ny1, nx2, ny2);
+}
