@@ -224,11 +224,15 @@ int nyx_register_font(NYX_FONT *f) {
 
 int nyx_make_font(void) {
     NYX_FONT *f;
+    int idx;
 
     f = init_font();
     if(!f)
         return -1;
-    return nyx_register_font(f);
+    idx = nyx_register_font(f);
+    if(idx < 0)
+        destroy_font(f);
+    return idx;
 }
 
 int nyx_import_font(const char *path) {
