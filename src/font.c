@@ -43,6 +43,7 @@ static void destroy_font(NYX_FONT *f) {
         return;
     nyx_destroy_map(f->glyphs);
     nyx_destroy_map(f->kernings);
+    free(f);
 }
 
 static NYX_FONT *init_font(void) {
