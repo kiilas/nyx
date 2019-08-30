@@ -1,7 +1,5 @@
 #include "nyx/nyx.h"
 
-#include "_shader.h"
-
 const char *color_shader_src =
         "#define RAMPS 9\n"
         "#define VALUES 5\n"
