@@ -195,7 +195,7 @@ int nyx_pack_upak(void *buffer, uint64_t buf_len, uint64_t *offset, int64_t i) {
     {
         if(nyx_pack_bit(buffer, buf_len, offset, n%2))
         {
-            offset = offset_bkp;
+            *offset = *offset_bkp;
             return -1;
         }
         n /= 2;
@@ -235,7 +235,7 @@ int nyx_unpack_upak(const void *buffer, uint64_t buf_len, uint64_t *offset, int6
 
         if(nyx_unpack_bit(buffer, buf_len, offset, &bit))
         {
-            offset = offset_bkp;
+            *offset = *offset_bkp;
             return -1;
         }
         *i |= bit << pos;
