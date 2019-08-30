@@ -2,8 +2,6 @@
 
 #include "_const.h"
 
-#include "SDL2/SDL_image.h"
-
 #define MAX_FONTS 256
 
 struct kerning_key {
