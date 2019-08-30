@@ -159,13 +159,15 @@ int _init_display(void) {
 }
 
 int _init_palette(void) {
+    void *new_ramps;
     int ramp, val;
 
     num_ramps = DEFAULT_NUM_RAMPS;
     num_values = DEFAULT_NUM_VALUES;
-    ramps = realloc(ramps, num_ramps * num_values * 4);
-    if(!ramps)
+    new_ramps = realloc(ramps, num_ramps * num_values * 4);
+    if(!new_ramps)
         return -1;
+    ramps = new_ramps;
     for(ramp=0; ramp<num_ramps; ++ramp)
         for(val=0; val<num_values; ++val)
         {
