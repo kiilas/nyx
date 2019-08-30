@@ -28,10 +28,10 @@ int nyx_unpack_bit(const void *buffer, uint64_t buf_len, uint64_t *offset, int *
     return 0;
 }
 
-int nyx_unpack_bits(const void *buffer, uint64_t buf_len, uint64_t *offset, void *restrict bits, uint64_t bit_len) {
-    if(nyx_copy_bits(bits, bit_len, 0, buffer, buf_len, *offset, bit_len))
+int nyx_unpack_bits(const void *buffer, uint64_t buf_len, uint64_t *offset, void *restrict bits, uint64_t bits_len) {
+    if(nyx_copy_bits(bits, bits_len, 0, buffer, buf_len, *offset, bits_len))
         return -1;
-    *offset += bit_len;
+    *offset += bits_len;
     return 0;
 }
 
@@ -166,7 +166,7 @@ int nyx_pack_ipak(void *buffer, uint64_t buf_len, uint64_t *offset, int64_t i) {
         return -1;
     if(nyx_pack_upak(buffer, buf_len, offset, i < 0 ? -i-1 : i))
     {
-        offset = offset_bkp;
+        *offset = *offset_bkp;
         return -1;
     }
     return 0;
@@ -213,7 +213,7 @@ int nyx_unpack_ipak(const void *buffer, uint64_t buf_len, uint64_t *offset, int6
         return -1;
     if(nyx_unpack_upak(buffer, buf_len, offset, &unsigned_part))
     {
-        offset = offset_bkp;
+        *offset = *offset_bkp;
         return -1;
     }
     *i = bit ? -unsigned_part-1 : unsigned_part;

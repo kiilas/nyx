@@ -16,6 +16,6 @@ int nyx_clear_texture(int id);
 int nyx_fill_texture(int id, NYX_TEXEL texel);
 
 int nyx_texture_sphere(int id, float x, float y, float r, NYX_TEXEL texel);
-int nyx_texture_ellipsoid(int id, float x, float y, float w, float h, float t, NYX_TEXEL texel);
+int nyx_texture_ellipsoid(int id, float x, float y, float w, float h, float r, NYX_TEXEL texel);
 
 #endif
