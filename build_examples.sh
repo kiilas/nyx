@@ -7,3 +7,4 @@ $compiler $opts -Lbin/lib -lnyx -o bin/examples/fonts examples/fonts.c &&
 $compiler $opts -Lbin/lib -lnyx -o bin/examples/rampval examples/rampval.c &&
 $compiler $opts -Lbin/lib -lnyx -o bin/examples/rects examples/rects.c &&
 $compiler $opts -Lbin/lib -lnyx -o bin/examples/textures examples/textures.c
+$compiler $opts -Lbin/lib -lnyx -o bin/examples/view examples/view.c
