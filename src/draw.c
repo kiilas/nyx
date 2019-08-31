@@ -69,9 +69,14 @@ int nyx_draw_unichar(int32_t x, int32_t y, uint32_t code, NYX_COLOR color) {
 
     if(nyx_active_font() < 0)
         return -1;
+    // if undefined glyph, try to render replacement glyph
     if(!bits)
-        // if undefined glyph, try to render 0x00 instead
-        return nyx_draw_unichar(x, y, 0, color);
+    {
+        uint32_t replacement = nyx_replacement_glyph();
+        if(code != replacement)
+            return nyx_draw_unichar(x, y, replacement, color);
+        return -1;
+    }
     w = nyx_glyph_width(code);
     h = nyx_font_height();
     v = nyx_vector(x, y);
