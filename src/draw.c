@@ -87,10 +87,11 @@ int nyx_draw_cstring(int32_t x, int32_t y, const char *str, size_t n, NYX_COLOR 
         uint32_t code = str[idx];
 
         if(!code)
-            return 0;
+            break;
         if(nyx_draw_char(x, y, code, color))
             return -1;
         x += nyx_glyph_width(code);
         x += nyx_font_h_spacing();
     }
+    return 0;
 }
