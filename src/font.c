@@ -19,6 +19,7 @@ struct glyph {
 };
 
 struct NYX_FONT {
+    uint32_t replacement;
     uint16_t glyph_w;
     uint16_t glyph_h;
     int16_t  h_spacing;
@@ -311,6 +312,23 @@ int nyx_set_font_spacing(int16_t spacing) {
     return 0;
 }
 
+uint32_t nyx_replacement_glyph() {
+    NYX_FONT *f = get_active_font();
+
+    if(!f)
+        return 0;
+    return f->replacement;
+}
+
+int nyx_set_replacement_glyph(uint32_t code) {
+    NYX_FONT *f = get_active_font();
+
+    if(!f)
+        return -1;
+    f->replacement = code;
+    return 0;
+}
+
 int nyx_glyph_width(uint32_t code) {
     const NYX_FONT *f = get_active_font();
     const struct glyph *g;
@@ -321,7 +339,11 @@ int nyx_glyph_width(uint32_t code) {
         return f->glyph_w;
     g = get_glyph(f, code);
     if(!g)
-        return -1;
+    {
+        g = get_glyph(f, nyx_replacement_glyph());
+        if(!g)
+            return -1;
+    }
     return g->w;
 }
 
