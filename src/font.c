@@ -284,6 +284,33 @@ int nyx_font_h_spacing(void) {
     return f->h_spacing;
 }
 
+int nyx_set_font_h_spacing(int16_t h_spacing) {
+    NYX_FONT *f = get_active_font();
+
+    if(!f)
+        return -1;
+    f->h_spacing = h_spacing;
+    return 0;
+}
+
+int nyx_set_font_v_spacing(int16_t v_spacing) {
+    NYX_FONT *f = get_active_font();
+
+    if(!f)
+        return -1;
+    f->v_spacing = v_spacing;
+    return 0;
+}
+
+int nyx_set_font_spacing(int16_t spacing) {
+    NYX_FONT *f = get_active_font();
+
+    if(!f)
+        return -1;
+    f->h_spacing = f->v_spacing = spacing;
+    return 0;
+}
+
 int nyx_glyph_width(uint32_t code) {
     const NYX_FONT *f = get_active_font();
     const struct glyph *g;

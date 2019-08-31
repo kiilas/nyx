@@ -21,6 +21,10 @@ int nyx_active_font(void);
 int nyx_font_height(void);
 int nyx_font_h_spacing(void);
 
+int nyx_set_font_h_spacing(int16_t h_spacing);
+int nyx_set_font_v_spacing(int16_t v_spacing);
+int nyx_set_font_spacing(int16_t spacing);
+
 int nyx_glyph_width(uint32_t code);
 const void *nyx_glyph_bits(uint32_t code);
 
