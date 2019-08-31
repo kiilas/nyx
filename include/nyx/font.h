@@ -20,6 +20,7 @@ int nyx_active_font(void);
 
 int nyx_font_height(void);
 int nyx_font_h_spacing(void);
+int nyx_font_v_spacing(void);
 
 int nyx_set_font_h_spacing(int16_t h_spacing);
 int nyx_set_font_v_spacing(int16_t v_spacing);

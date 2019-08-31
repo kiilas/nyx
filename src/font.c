@@ -285,6 +285,14 @@ int nyx_font_h_spacing(void) {
     return f->h_spacing;
 }
 
+int nyx_font_v_spacing(void) {
+    const NYX_FONT *f = get_active_font();
+
+    if(!f)
+        return -1;
+    return f->v_spacing;
+}
+
 int nyx_set_font_h_spacing(int16_t h_spacing) {
     NYX_FONT *f = get_active_font();
 

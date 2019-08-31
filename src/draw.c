@@ -100,3 +100,37 @@ int nyx_draw_cstring(int32_t x, int32_t y, const char *str, size_t n, NYX_COLOR 
     }
     return 0;
 }
+
+int nyx_draw_cstring_multiline(int32_t x, int32_t y, int wrap, const char *str, size_t n, NYX_COLOR color) {
+    size_t idx;
+    int pos_x = x;
+    int pos_y = y;
+
+    for(idx=0; idx<n; ++idx)
+    {
+        uint32_t code = str[idx];
+        int width;
+
+        if(!code)
+            break;
+        if(code == '\n')
+        {
+            pos_x = x;
+            pos_y += nyx_font_height();
+            pos_y += nyx_font_v_spacing();
+            continue;
+        }
+        width = nyx_glyph_width(code);
+        if(wrap && pos_x+width>x+wrap && pos_x!=x)
+        {
+            pos_x = x;
+            pos_y += nyx_font_height();
+            pos_y += nyx_font_v_spacing();
+        }
+        if(nyx_draw_char(pos_x, pos_y, code, color))
+            return -1;
+        pos_x += width;
+        pos_x += nyx_font_h_spacing();
+    }
+    return 0;
+}
