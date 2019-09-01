@@ -9,8 +9,8 @@ int nyx_make_font(void);
 
 int nyx_kill_font(int idx);
 
-int nyx_load_font(const char *path);
-int nyx_save_font(const char *path);
+int nyx_font_load(const char *path);
+int nyx_font_save(const char *path);
 
 int nyx_import_font(const char *path);
 int nyx_import_font_from_bitmap(const NYX_BITMAP *bitmap);
@@ -31,5 +31,8 @@ int nyx_set_replacement_glyph(uint32_t code);
 
 int nyx_glyph_width(uint32_t code);
 const void *nyx_glyph_bits(uint32_t code);
+
+int nyx_font_num_glyphs(uint32_t *num_glyphs);
+int nyx_font_code_by_index(uint32_t idx, uint32_t *code);
 
 #endif

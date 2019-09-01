@@ -3,8 +3,6 @@
 #include "_list.h"
 
 struct NYX_MAP {
-    size_t key_size;
-    size_t value_size;
     NYX_LIST *keys;
     NYX_LIST *values;
 };
@@ -63,4 +61,16 @@ int nyx_map_insert(const NYX_MAP *map, const void *key, const void *value) {
         return -1;
     }
     return 0;
+}
+
+int nyx_map_size(const NYX_MAP *map, size_t *size) {
+    if(!map)
+        return -1;
+    return nyx_list_size(map->keys, size);
+}
+
+void *nyx_map_key_by_index(const NYX_MAP *map, size_t idx) {
+    if(!map)
+        return 0;
+    return nyx_list_get(map->keys, idx);
 }

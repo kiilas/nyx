@@ -187,19 +187,14 @@ int nyx_pack_upak(void *buffer, uint64_t buf_len, uint64_t *offset, int64_t i) {
         n /= 2;
         ++mantissa_bits;
     }
-
     if(nyx_pack_zeros(buffer, buf_len, offset, mantissa_bits-1))
         return -1;
-    n = mantissa;
-    while(n)
-    {
-        if(nyx_pack_bit(buffer, buf_len, offset, n%2))
+    for(n=mantissa_bits-1; n>=0; --n)
+        if(nyx_pack_bit(buffer, buf_len, offset, mantissa>>n & 1))
         {
             *offset = *offset_bkp;
             return -1;
         }
-        n /= 2;
-    }
     return 0;
 }
 

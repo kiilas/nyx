@@ -84,6 +84,14 @@ void nyx_destroy_list(NYX_LIST *list) {
     free(list);
 }
 
+void *nyx_list_get(const NYX_LIST *list, size_t idx) {
+    if(!list)
+        return 0;
+    if(idx >= list->len)
+        return 0;
+    return (char *)list->data + idx*list->elem_size;
+}
+
 void *nyx_list_get_ptr_unsafe(const NYX_LIST *list, size_t idx) {
     return (char *)list->data + idx*list->elem_size;
 }
@@ -128,5 +136,12 @@ int nyx_list_remove(NYX_LIST *list, size_t idx) {
     memmove(nyx_list_get_ptr_unsafe(list, idx),
             nyx_list_get_ptr_unsafe(list, idx+1),
             (list->len-idx) * list->elem_size);
+    return 0;
+}
+
+int nyx_list_size(const NYX_LIST *list, size_t *size) {
+    if(!list)
+        return -1;
+    *size = list->len;
     return 0;
 }

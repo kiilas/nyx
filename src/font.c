@@ -235,6 +235,59 @@ int nyx_make_font(void) {
     return idx;
 }
 
+int nyx_font_save(const char *path) {
+    const NYX_FONT *f = get_active_font();
+
+    NYX_FILE *file;
+    uint8_t flags;
+    uint32_t num_glyphs;
+    uint32_t previous;
+    uint32_t i;
+
+    if(!f)
+        return -1;
+    file = nyx_file_open(path, NYX_FILE_WRITE, NYX_FILE_BIT);
+    if(!file)
+        return -1;
+    // TODO clean this shit up
+    nyx_file_write_cstring(file, "nyxf", 4);
+    nyx_file_write_u32(file, 0);
+    flags = 0;
+    if(f->monospaced)
+        flags |= 0x01;
+    if(f->kerning)
+        flags |= 0x02;
+    nyx_file_write_u8(file, flags);
+    nyx_file_write_u32(file, f->replacement);
+    if(f->monospaced)
+        nyx_file_write_upak(file, f->glyph_w - 1);
+    nyx_file_write_upak(file, f->glyph_h - 1);
+    nyx_file_write_upak(file, f->h_spacing);
+    nyx_file_write_upak(file, f->v_spacing);
+    nyx_font_num_glyphs(&num_glyphs);
+    nyx_file_write_upak(file, num_glyphs);
+    for(i=0; i<num_glyphs; ++i)
+    {
+        uint32_t code;
+        const void *bits;
+        int width;
+
+        nyx_font_code_by_index(i, &code);
+        bits = nyx_glyph_bits(code);
+        width = nyx_glyph_width(code);
+        if(i)
+            nyx_file_write_upak(file, code - previous - 1);
+        else
+            nyx_file_write_upak(file, code);
+        if(!f->monospaced)
+            nyx_file_write_upak(file, width);
+        nyx_file_write_bits(file, bits, width * f->glyph_h);
+        previous = code;
+    }
+    nyx_file_close(file);
+    return 0;
+}
+
 int nyx_import_font(const char *path) {
     NYX_BITMAP *bitmap;
     int idx;
@@ -365,4 +418,30 @@ const void *nyx_glyph_bits(uint32_t code) {
     if(!g)
         return 0;
     return g->bits;
+}
+
+int nyx_font_num_glyphs(uint32_t *num_glyphs) {
+    const NYX_FONT *f = get_active_font();
+
+    size_t size;
+
+    if(!f)
+        return -1;
+    if(nyx_map_size(f->glyphs, &size))
+        return -1;
+    *num_glyphs = size;
+    return 0;
+}
+
+int nyx_font_code_by_index(uint32_t idx, uint32_t *code) {
+    const NYX_FONT *f = get_active_font();
+    const uint32_t *key;
+
+    if(!f)
+        return -1;
+    key = nyx_map_key_by_index(f->glyphs, idx);
+    if(!key)
+        return -1;
+    *code = *key;
+    return 0;
 }

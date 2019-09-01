@@ -7,6 +7,7 @@
 #include "nyx/draw.h"
 #include "nyx/error.h"
 #include "nyx/event.h"
+#include "nyx/file.h"
 #include "nyx/font.h"
 #include "nyx/geom.h"
 #include "nyx/graphics.h"
