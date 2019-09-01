@@ -65,21 +65,21 @@ NYX_FILE *nyx_file_open(const char *path, int mode, int format) {
     const char *append = "ab";
 
     NYX_FILE *file;
-    const char **mode_arg;
+    const char *mode_arg;
 
     file = calloc(1, sizeof(NYX_FILE));
     if(!file)
         return 0;
 
     if(mode == NYX_FILE_READ)
-        mode_arg = &read;
+        mode_arg = read;
     else if(mode == NYX_FILE_WRITE)
-        mode_arg = &write;
+        mode_arg = write;
     else if(mode == NYX_FILE_APPEND)
-        mode_arg = &append;
+        mode_arg = append;
     else
         return 0;
-    file->fd = fopen(path, *mode_arg);
+    file->fd = fopen(path, mode_arg);
     if(!file->fd)
     {
         nyx_file_close(file);
