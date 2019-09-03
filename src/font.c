@@ -281,6 +281,10 @@ fail:
     return 0;
 }
 
+static int glyph_bit(const struct glyph *g, int x, int y) {
+    return nyx_get_bit_unsafe(g->bits, x + y*g->w);
+}
+
 static struct glyph *get_glyph(const NYX_FONT *f, uint32_t code) {
     uint8_t key[4];
 
@@ -488,6 +492,14 @@ int nyx_set_replacement_glyph(uint32_t code) {
     return 0;
 }
 
+int nyx_glyph_exists(uint32_t code) {
+    const NYX_FONT *f = get_active_font();
+
+    if(!f)
+        return 0;
+    return get_glyph(f, code) != 0;
+}
+
 int nyx_glyph_width(uint32_t code) {
     const NYX_FONT *f = get_active_font();
     const struct glyph *g;
@@ -596,4 +608,91 @@ int nyx_font_kerning_pair_set(uint32_t prev, uint32_t next, int16_t offset) {
         nyx_map_remove(f->kernings, key);
     nyx_i16_to_bytes(value, offset);
     return nyx_map_insert(f->kernings, key, value);
+}
+
+static int front_gap(const struct glyph *g, int y) {
+    int x;
+
+    for(x=g->w; x>0; --x)
+        if(glyph_bit(g, x-1, y))
+            break;
+    return g->w - x;
+}
+
+static int back_gap(const struct glyph *g, int y) {
+    int x;
+
+    for(x=0; x<g->w; ++x)
+        if(glyph_bit(g, x, y))
+            break;
+    return x;
+}
+
+int nyx_font_kerning_auto_pair(uint32_t prev, uint32_t next) {
+    const NYX_FONT *f = get_active_font();
+    const struct glyph *prev_glyph;
+    const struct glyph *next_glyph;
+    int font_height;
+    int max_gap;
+    int offset;
+    int y;
+
+    if(!f)
+        return -1;
+    if(!f->kerning)
+        return -1;
+    prev_glyph = get_glyph(f, prev);
+    next_glyph = get_glyph(f, next);
+    if(!prev_glyph || !next_glyph)
+        return -1;
+    font_height = f->glyph_h;
+    max_gap = prev_glyph->w + next_glyph->w;
+    for(y=0; y<font_height; ++y)
+    {
+        int gap = front_gap(prev_glyph, y) + back_gap(next_glyph, y);
+
+        if(gap < max_gap)
+            max_gap = gap;
+    }
+    offset = max_gap>f->h_spacing ? f->h_spacing : max_gap;
+    return nyx_font_kerning_pair_set(prev, next, offset);
+}
+
+int nyx_font_kerning_auto_range(uint32_t prev_min, uint32_t prev_max, uint32_t next_min, uint32_t next_max) {
+    uint32_t prev;
+    uint32_t next;
+
+    for(prev=prev_min; prev<=prev_max; ++prev)
+    {
+        if(!nyx_glyph_exists(prev))
+            continue;
+        for(next=next_min; next<=next_max; ++next)
+        {
+            if(!nyx_glyph_exists(next))
+                continue;
+            if(nyx_font_kerning_auto_pair(prev, next))
+                return -1;
+        }
+    }
+    return 0;
+}
+
+int nyx_font_kerning_auto_ranges(int num_ranges, const uint32_t *range_pairs) {
+    int prev;
+    int next;
+
+    for(prev=0; prev<num_ranges; ++prev)
+        for(next=0; next<num_ranges; ++next)
+        {
+            uint32_t prev_min = range_pairs[2*prev];
+            uint32_t prev_max = range_pairs[2*prev + 1];
+            uint32_t next_min = range_pairs[2*next];
+            uint32_t next_max = range_pairs[2*next + 1];
+            if(nyx_font_kerning_auto_range(prev_min,
+                                           prev_max,
+                                           next_min,
+                                           next_max))
+                return -1;
+        }
+    return 0;
 }

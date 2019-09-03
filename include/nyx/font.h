@@ -29,6 +29,7 @@ int nyx_set_font_spacing(int16_t spacing);
 uint32_t nyx_replacement_glyph(void);
 int nyx_set_replacement_glyph(uint32_t code);
 
+int nyx_glyph_exists(uint32_t code);
 int nyx_glyph_width(uint32_t code);
 const void *nyx_glyph_bits(uint32_t code);
 
@@ -39,5 +40,8 @@ int nyx_font_kerning(void);
 int nyx_font_set_kerning(int kerning);
 int nyx_font_kerning_pair(uint32_t prev, uint32_t next);
 int nyx_font_kerning_pair_set(uint32_t prev, uint32_t next, int16_t offset);
+int nyx_font_kerning_auto_pair(uint32_t prev, uint32_t next);
+int nyx_font_kerning_auto_range(uint32_t prev_min, uint32_t prev_max, uint32_t next_min, uint32_t next_max);
+int nyx_font_kerning_auto_ranges(int num_ranges, const uint32_t *range_pairs);
 
 #endif
