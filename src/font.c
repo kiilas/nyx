@@ -85,6 +85,7 @@ static int next_glyph(const NYX_BITMAP *bitmap, uint32_t border_color, int *x, i
 
 static int add_glyph_data(NYX_FONT *f, uint32_t code, int w, int h, void *bits) {
     struct glyph glyph;
+    uint8_t key[4];
 
     if(!f)
         return -1;
@@ -99,8 +100,8 @@ static int add_glyph_data(NYX_FONT *f, uint32_t code, int w, int h, void *bits) 
     }
     glyph.w = w;
     glyph.bits = bits;
-    // do we care about endianness?
-    if(nyx_map_insert(f->glyphs, &code, &glyph))
+    nyx_u32_to_bytes(key, code);
+    if(nyx_map_insert(f->glyphs, key, &glyph))
         return -1;
     return 0;
 }
@@ -252,7 +253,8 @@ static NYX_FONT *load(NYX_FILE *file) {
     uint32_t previous;
     uint32_t idx;
 
-    nyx_file_read(file, buf, 4);
+    if(nyx_file_read(file, buf, 4))
+        return 0;
     if(memcmp(buf, "nyxf", 4))
         return 0;
     if(nyx_file_read_u32(file, &u32))
@@ -290,9 +292,12 @@ fail:
 }
 
 static struct glyph *get_glyph(const NYX_FONT *f, uint32_t code) {
+    uint8_t key[4];
+
     if(!f)
         return 0;
-    return nyx_map_get(f->glyphs, &code);
+    nyx_u32_to_bytes(key, code);
+    return nyx_map_get(f->glyphs, key);
 }
 
 int nyx_register_font(NYX_FONT *f) {
@@ -538,13 +543,13 @@ int nyx_font_num_glyphs(uint32_t *num_glyphs) {
 
 int nyx_font_code_by_index(uint32_t idx, uint32_t *code) {
     const NYX_FONT *f = get_active_font();
-    const uint32_t *key;
-
+    const void *key;
+    
     if(!f)
         return -1;
     key = nyx_map_key_by_index(f->glyphs, idx);
     if(!key)
         return -1;
-    *code = *key;
+    *code = nyx_bytes_to_u32(key);
     return 0;
 }

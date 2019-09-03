@@ -110,10 +110,6 @@ NYX_FILE *nyx_file_open(const char *path, int mode, int format) {
     NYX_FILE *file;
     const char *mode_arg;
 
-    file = calloc(1, sizeof(NYX_FILE));
-    if(!file)
-        return 0;
-
     if(mode == NYX_FILE_READ)
         mode_arg = read;
     else if(mode == NYX_FILE_WRITE)
@@ -122,6 +118,11 @@ NYX_FILE *nyx_file_open(const char *path, int mode, int format) {
         mode_arg = append;
     else
         return 0;
+
+    file = calloc(1, sizeof(NYX_FILE));
+    if(!file)
+        return 0;
+
     file->fd = fopen(path, mode_arg);
     if(!file->fd)
     {
