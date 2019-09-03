@@ -93,6 +93,8 @@ int nyx_draw_cstring(int32_t x, int32_t y, const char *str, size_t n, NYX_COLOR 
 
         if(!code)
             break;
+        if(idx)
+            x -= nyx_font_kerning_pair(str[idx-1], code);
         if(nyx_draw_char(x, y, code, color))
             return -1;
         x += nyx_glyph_width(code);
@@ -120,6 +122,8 @@ int nyx_draw_cstring_multiline(int32_t x, int32_t y, int wrap, const char *str, 
             pos_y += nyx_font_v_spacing();
             continue;
         }
+        if(idx)
+            pos_x -= nyx_font_kerning_pair(str[idx-1], code);
         width = nyx_glyph_width(code);
         if(wrap && pos_x+width>x+wrap && pos_x!=x)
         {

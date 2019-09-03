@@ -10,6 +10,7 @@ void nyx_destroy_map(NYX_MAP *map);
 
 void *nyx_map_get(const NYX_MAP *map, const void *key);
 int nyx_map_insert(const NYX_MAP *map, const void *key, const void *value);
+int nyx_map_remove(NYX_MAP *map, const void *key);
 
 int nyx_map_size(const NYX_MAP *map, size_t *size);
 

@@ -101,6 +101,8 @@ void nyx_list_set_unsafe(NYX_LIST *list, size_t idx, const void *elem) {
 }
 
 int nyx_list_insert(NYX_LIST *list, size_t idx, const void *elem) {
+    if(!list)
+        return -1;
     if(idx > list->len)
         return -1;
     if(grow(list))
@@ -115,6 +117,8 @@ int nyx_list_insert(NYX_LIST *list, size_t idx, const void *elem) {
 int nyx_list_insert_sorted(NYX_LIST *list, const void *elem) {
     size_t idx;
     
+    if(!list)
+        return -1;
     idx = _nyx_list_index_sorted(list, elem, 0);
     return nyx_list_insert(list, idx, elem);
 }
@@ -123,6 +127,8 @@ int nyx_list_insert_sorted_unique(NYX_LIST *list, const void *elem) {
     size_t idx;
     int exists;
 
+    if(!list)
+        return -1;
     idx = _nyx_list_index_sorted(list, elem, &exists);
     if(!exists)
         return nyx_list_insert(list, idx, elem);
@@ -130,6 +136,8 @@ int nyx_list_insert_sorted_unique(NYX_LIST *list, const void *elem) {
 }
 
 int nyx_list_remove(NYX_LIST *list, size_t idx) {
+    if(!list)
+        return -1;
     if(idx >= list->len)
         return -1;
     --list->len;

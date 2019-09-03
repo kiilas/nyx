@@ -9,15 +9,6 @@
 #define FLAG_MONOSPACED 0x01
 #define FLAG_KERNING    0x02
 
-struct kerning_key {
-    uint32_t left;
-    uint32_t right;
-};
-
-struct kerning_data {
-    int16_t  spacing;
-};
-
 struct glyph {
     uint16_t  w;
     void     *bits;
@@ -59,8 +50,7 @@ static NYX_FONT *init_font(void) {
     f->glyphs = nyx_init_map(4, sizeof(struct glyph));
     if(!f->glyphs)
         goto fail;
-    f->kernings = nyx_init_map(sizeof(struct kerning_key),
-                               sizeof(struct kerning_data));
+    f->kernings = nyx_init_map(8, 2);
     if(!f->kernings)
         goto fail;
     return f;
@@ -552,4 +542,58 @@ int nyx_font_code_by_index(uint32_t idx, uint32_t *code) {
         return -1;
     *code = nyx_bytes_to_u32(key);
     return 0;
+}
+
+int nyx_font_kerning(void) {
+    const NYX_FONT *f = get_active_font();
+
+    if(!f)
+        return -1;
+    return f->kerning;
+}
+
+int nyx_font_set_kerning(int kerning) {
+    NYX_FONT *f = get_active_font();
+
+    if(!f)
+        return -1;
+    f->kerning = kerning;
+    return 0;
+}
+
+int nyx_font_kerning_pair(uint32_t prev, uint32_t next) {
+    const NYX_FONT *f = get_active_font();
+
+    uint8_t key[8];
+    const void *value;
+
+    if(!f)
+        return 0;
+    if(!f->kerning)
+        return 0;
+    nyx_u32_to_bytes(key, prev);
+    nyx_u32_to_bytes(key+4, next);
+    value = nyx_map_get(f->kernings, key);
+    if(!value)
+        return 0;
+    return nyx_bytes_to_i16(value);
+}
+
+int nyx_font_kerning_pair_set(uint32_t prev, uint32_t next, int16_t offset) {
+    const NYX_FONT *f = get_active_font();
+
+    uint8_t key[8];
+    uint8_t value[2];
+
+    if(!f)
+        return -1;
+    if(!f->kerning)
+        return -1;
+        
+    nyx_u32_to_bytes(key, prev);
+    nyx_u32_to_bytes(key+4, next);
+    if(!offset)
+        nyx_map_remove(f->kernings, key);
+    nyx_i16_to_bytes(value, offset);
+    return nyx_map_insert(f->kernings, key, value);
 }

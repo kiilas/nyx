@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 
-const char *font_path = "../../fonts/basic.png";
+const char *font_path = "../../fonts/basic.nyxf";
 const char *text = "The quick dark elf jumps over the lazy orc";
 
 const NYX_COLOR white = {0, 255};
@@ -55,7 +55,7 @@ void render(void) {
 int main(void) {
     if(nyx_init())
         return -1;
-    font_id = nyx_import_font(font_path);
+    font_id = nyx_font_load(font_path);
     if(font_id < 0)
     {
         printf("couldn't load font from: %s\n", font_path);
