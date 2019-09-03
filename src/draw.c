@@ -122,6 +122,9 @@ int nyx_draw_cstring_multiline(int32_t x, int32_t y, int wrap, const char *str, 
             pos_y += nyx_font_v_spacing();
             continue;
         }
+        // temporary workaround
+        if(code < 0x20)
+            continue;
         if(idx)
             pos_x -= nyx_font_kerning_pair(str[idx-1], code);
         width = nyx_glyph_width(code);
