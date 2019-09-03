@@ -297,7 +297,7 @@ int nyx_file_read_ipak(NYX_FILE *file, int64_t *i) {
 }
 
 int nyx_file_read_upak(NYX_FILE *file, int64_t *i) {
-    uint64_t mantissa_bits;
+    size_t mantissa_bits;
     unsigned pos;
 
     if(nyx_file_read_zeros(file, &mantissa_bits))
