@@ -36,6 +36,8 @@ const void *nyx_glyph_bits(uint32_t code);
 int nyx_font_num_glyphs(uint32_t *num_glyphs);
 int nyx_font_code_by_index(uint32_t idx, uint32_t *code);
 
+int nyx_font_monospaced(void);
+
 int nyx_font_kerning(void);
 int nyx_font_set_kerning(int kerning);
 int nyx_font_kerning_pair(uint32_t prev, uint32_t next);

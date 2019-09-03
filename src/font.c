@@ -556,6 +556,14 @@ int nyx_font_code_by_index(uint32_t idx, uint32_t *code) {
     return 0;
 }
 
+int nyx_font_monospaced(void) {
+    const NYX_FONT *f = get_active_font();
+
+    if(!f)
+        return -1;
+    return f->monospaced;
+}
+
 int nyx_font_kerning(void) {
     const NYX_FONT *f = get_active_font();
 
@@ -568,6 +576,8 @@ int nyx_font_set_kerning(int kerning) {
     NYX_FONT *f = get_active_font();
 
     if(!f)
+        return -1;
+    if(kerning && f->monospaced)
         return -1;
     f->kerning = kerning;
     return 0;
