@@ -30,7 +30,6 @@ int load(const char *path) {
     return 0;
 }
 
-
 void randomise_colors(void) {
     bg_color = nyx_random_color();
     text_color = nyx_random_color();
@@ -95,7 +94,6 @@ int main(int argc, char **argv) {
     if(font_id < 0)
         return -1;
     nyx_select_font(font_id);
-    nyx_set_replacement_glyph('?');
     randomise_colors();
     nyx_set_tic_handler(tic);
     nyx_set_event_handler(handle_event);
