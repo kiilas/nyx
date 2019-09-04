@@ -93,3 +93,9 @@ void *nyx_map_key_by_index(const NYX_MAP *map, size_t idx) {
         return 0;
     return nyx_list_get(map->keys, idx);
 }
+
+void *nyx_map_value_by_index(const NYX_MAP *map, size_t idx) {
+    if(!map)
+        return 0;
+    return nyx_list_get(map->values, idx);
+}

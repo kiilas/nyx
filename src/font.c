@@ -26,6 +26,12 @@ struct NYX_FONT {
     NYX_MAP *kernings;
 };
 
+struct NYX_KERNING_PAIR {
+    uint32_t prev;
+    uint32_t next;
+    int16_t  offset;
+};
+
 static NYX_FONT *fonts[MAX_FONTS];
 
 static int active_font = -1;
@@ -200,6 +206,24 @@ static NYX_FONT *get_active_font(void) {
     return fonts[active_font];
 }
 
+static int kerning_pair_set(NYX_FONT *font, uint32_t prev, uint32_t next, int16_t offset) {
+    uint8_t key[8];
+    uint8_t value[2];
+
+    if(!font->kerning)
+        return -1;
+        
+    nyx_u32_to_bytes(key, prev);
+    nyx_u32_to_bytes(key+4, next);
+    if(!offset)
+    {
+        nyx_map_remove(font->kernings, key);
+        return 0;
+    }
+    nyx_i16_to_bytes(value, offset);
+    return nyx_map_insert(font->kernings, key, value);
+}
+
 static int load_glyph(NYX_FONT *font, NYX_FILE *file, uint32_t *previous, bool first) {
     uint32_t code;
     int64_t offset;
@@ -230,6 +254,42 @@ fail:
     return -1;
 }
 
+static int load_kerning(NYX_FONT *font, NYX_FILE *file, uint32_t *last_prev, uint32_t *last_next, bool first) {
+    int64_t packed_prev;
+    int64_t packed_next;
+    int64_t packed_offset;
+    uint32_t prev;
+    uint32_t next;
+    int16_t offset;
+
+    if(nyx_file_read_upak(file, &packed_prev))
+        return -1;
+    prev = first ? packed_prev : *last_prev+packed_prev;
+    if(!first && *last_prev == prev)
+    {
+        if(nyx_file_read_upak(file, &packed_next))
+            return -1;
+        next = *last_next + packed_next + 1;
+    }
+    else
+    {
+        if(nyx_file_read_ipak(file, &packed_next))
+            return -1;
+        next = prev - packed_next;
+    }
+    if(nyx_file_read_ipak(file, &packed_offset))
+        return -1;
+    if(packed_offset >= 0)
+        offset = packed_offset + 1;
+    else
+        offset = packed_offset;
+    if(kerning_pair_set(font, prev, next, offset))
+        return -1;
+    *last_prev = prev;
+    *last_next = next;
+    return 0;
+}
+
 static NYX_FONT *load(NYX_FILE *file) {
     NYX_FONT *font;
     char buf[4];
@@ -241,7 +301,7 @@ static NYX_FONT *load(NYX_FILE *file) {
     int64_t v_spacing;
     int64_t num_glyphs;
     uint32_t previous;
-    uint32_t idx;
+    int64_t idx;
 
     if(nyx_file_read(file, buf, 4))
         return 0;
@@ -275,6 +335,18 @@ static NYX_FONT *load(NYX_FILE *file) {
     for(idx=0; idx<num_glyphs; ++idx)
         if(load_glyph(font, file, &previous, idx == 0))
             goto fail;
+    if(font->kerning)
+    {
+        int64_t num_kernings;
+        uint32_t last_prev;
+        uint32_t last_next;
+
+        if(nyx_file_read_upak(file, &num_kernings))
+            goto fail;
+        for(idx=0; idx<num_kernings; ++idx)
+            if(load_kerning(font, file, &last_prev, &last_next, idx == 0))
+                goto fail;
+    }
     return font;
 fail:
     destroy_font(font);
@@ -344,7 +416,7 @@ int nyx_font_save(const char *path) {
     uint8_t flags;
     uint32_t num_glyphs;
     uint32_t previous;
-    uint32_t idx;
+    uint64_t idx;
 
     if(!f)
         return -1;
@@ -385,6 +457,39 @@ int nyx_font_save(const char *path) {
             nyx_file_write_upak(file, width);
         nyx_file_write_bits(file, bits, width * f->glyph_h);
         previous = code;
+    }
+    if(f->kerning)
+    {
+        size_t num_kernings;
+        uint32_t last_prev;
+        uint32_t last_next;
+
+        nyx_font_kerning_num_pairs(&num_kernings);
+        nyx_file_write_upak(file, num_kernings);
+        for(idx=0; idx<num_kernings; ++idx)
+        {
+            NYX_KERNING_PAIR pair;
+            int adj_offset;
+
+            nyx_font_kerning_pair_by_index(idx, &pair);
+            if(!pair.offset)
+                continue;
+            if(idx)
+                nyx_file_write_upak(file, pair.prev - last_prev);
+            else
+                nyx_file_write_upak(file, pair.prev);
+            if(idx && pair.prev == last_prev)
+                nyx_file_write_upak(file, pair.next - last_next - 1);
+            else
+                nyx_file_write_ipak(file, (int64_t)pair.prev - pair.next);
+            if(pair.offset > 0)
+                adj_offset = pair.offset - 1;
+            else
+                adj_offset = pair.offset;
+            nyx_file_write_ipak(file, adj_offset);
+            last_prev = pair.prev;
+            last_next = pair.next;
+        }
     }
     nyx_file_close(file);
     return 0;
@@ -583,6 +688,15 @@ int nyx_font_set_kerning(int kerning) {
     return 0;
 }
 
+int nyx_font_kerning_num_pairs(size_t *num_pairs)
+{
+    NYX_FONT *f = get_active_font();
+
+    if(!f)
+        return -1;
+    return nyx_map_size(f->kernings, num_pairs);
+}
+
 int nyx_font_kerning_pair(uint32_t prev, uint32_t next) {
     const NYX_FONT *f = get_active_font();
 
@@ -602,22 +716,31 @@ int nyx_font_kerning_pair(uint32_t prev, uint32_t next) {
 }
 
 int nyx_font_kerning_pair_set(uint32_t prev, uint32_t next, int16_t offset) {
+    NYX_FONT *f = get_active_font();
+
+    if(!f)
+        return -1;
+    return kerning_pair_set(f, prev, next, offset);
+}
+
+int nyx_font_kerning_pair_by_index(size_t index, NYX_KERNING_PAIR *pair) {
     const NYX_FONT *f = get_active_font();
 
-    uint8_t key[8];
-    uint8_t value[2];
+    const uint8_t *key;
+    const uint8_t *value;
 
     if(!f)
         return -1;
     if(!f->kerning)
         return -1;
-        
-    nyx_u32_to_bytes(key, prev);
-    nyx_u32_to_bytes(key+4, next);
-    if(!offset)
-        nyx_map_remove(f->kernings, key);
-    nyx_i16_to_bytes(value, offset);
-    return nyx_map_insert(f->kernings, key, value);
+    key = nyx_map_key_by_index(f->kernings, index);
+    if(!key)
+        return -1;
+    value = nyx_map_value_by_index(f->kernings, index);
+    pair->prev = nyx_bytes_to_u32(key);
+    pair->next = nyx_bytes_to_u32(key+4);
+    pair->offset = nyx_bytes_to_i16(value);
+    return 0;
 }
 
 static int front_gap(const struct glyph *g, int y) {

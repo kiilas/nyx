@@ -15,5 +15,6 @@ int nyx_map_remove(NYX_MAP *map, const void *key);
 int nyx_map_size(const NYX_MAP *map, size_t *size);
 
 void *nyx_map_key_by_index(const NYX_MAP *map, size_t idx);
+void *nyx_map_value_by_index(const NYX_MAP *map, size_t idx);
 
 #endif
