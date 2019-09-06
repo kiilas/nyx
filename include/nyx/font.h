@@ -3,8 +3,6 @@
 
 typedef struct NYX_FONT NYX_FONT;
 
-typedef struct NYX_KERNING_PAIR NYX_KERNING_PAIR;
-
 int nyx_register_font(NYX_FONT *f);
 
 int nyx_make_font(void);
@@ -39,16 +37,5 @@ int nyx_font_num_glyphs(uint32_t *num_glyphs);
 int nyx_font_code_by_index(uint32_t idx, uint32_t *code);
 
 int nyx_font_monospaced(void);
-
-int nyx_font_kerning(void);
-int nyx_font_set_kerning(int kerning);
-int nyx_font_kerning_num_pairs(size_t *num_pairs);
-int nyx_font_kerning_pair(uint32_t prev, uint32_t next);
-int nyx_font_kerning_pair_set(uint32_t prev, uint32_t next, int16_t offset);
-int nyx_font_kerning_pair_by_index(uint64_t index, NYX_KERNING_PAIR *pair);
-
-int nyx_font_kerning_auto_pair(uint32_t prev, uint32_t next);
-int nyx_font_kerning_auto_range(uint32_t prev_min, uint32_t prev_max, uint32_t next_min, uint32_t next_max);
-int nyx_font_kerning_auto_ranges(int num_ranges, const uint32_t *range_pairs);
 
 #endif

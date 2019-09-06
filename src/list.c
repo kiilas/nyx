@@ -48,7 +48,7 @@ size_t _nyx_list_index_sorted(const NYX_LIST *list, const void *elem, int *exist
     while(min_idx < max_idx)
     {
         size_t avg = (min_idx + max_idx) / 2;
-        const void *pivot = nyx_list_get_ptr_unsafe(list, avg);
+        const void *pivot = nyx_list_get_unsafe(list, avg);
         int cmp = memcmp(elem, pivot, list->elem_size);
 
         if(cmp < 0)
@@ -92,12 +92,12 @@ void *nyx_list_get(const NYX_LIST *list, size_t idx) {
     return (char *)list->data + idx*list->elem_size;
 }
 
-void *nyx_list_get_ptr_unsafe(const NYX_LIST *list, size_t idx) {
+void *nyx_list_get_unsafe(const NYX_LIST *list, size_t idx) {
     return (char *)list->data + idx*list->elem_size;
 }
 
 void nyx_list_set_unsafe(NYX_LIST *list, size_t idx, const void *elem) {
-    memcpy(nyx_list_get_ptr_unsafe(list, idx), elem, list->elem_size);
+    memcpy(nyx_list_get_unsafe(list, idx), elem, list->elem_size);
 }
 
 int nyx_list_insert(NYX_LIST *list, size_t idx, const void *elem) {
@@ -107,10 +107,10 @@ int nyx_list_insert(NYX_LIST *list, size_t idx, const void *elem) {
         return -1;
     if(grow(list))
        return -1;
-    memmove(nyx_list_get_ptr_unsafe(list, idx + 1),
-            nyx_list_get_ptr_unsafe(list, idx),
+    memmove(nyx_list_get_unsafe(list, idx + 1),
+            nyx_list_get_unsafe(list, idx),
             (list->len-idx-1) * list->elem_size);
-    memcpy(nyx_list_get_ptr_unsafe(list, idx), elem, list->elem_size);
+    memcpy(nyx_list_get_unsafe(list, idx), elem, list->elem_size);
     return 0;
 }
 
@@ -141,15 +141,12 @@ int nyx_list_remove(NYX_LIST *list, size_t idx) {
     if(idx >= list->len)
         return -1;
     --list->len;
-    memmove(nyx_list_get_ptr_unsafe(list, idx),
-            nyx_list_get_ptr_unsafe(list, idx+1),
+    memmove(nyx_list_get_unsafe(list, idx),
+            nyx_list_get_unsafe(list, idx+1),
             (list->len-idx) * list->elem_size);
     return 0;
 }
 
-int nyx_list_size(const NYX_LIST *list, size_t *size) {
-    if(!list)
-        return -1;
-    *size = list->len;
-    return 0;
+size_t nyx_list_size(const NYX_LIST *list) {
+    return list->len;
 }

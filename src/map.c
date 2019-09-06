@@ -42,7 +42,7 @@ void *nyx_map_get(const NYX_MAP *map, const void *key) {
     idx = _nyx_list_index_sorted(map->keys, key, &exists);
     if(!exists)
         return 0;
-    return nyx_list_get_ptr_unsafe(map->values, idx);
+    return nyx_list_get_unsafe(map->values, idx);
 }
 
 int nyx_map_insert(const NYX_MAP *map, const void *key, const void *value) {
@@ -82,10 +82,8 @@ int nyx_map_remove(NYX_MAP *map, const void *key) {
     return 0;
 }
 
-int nyx_map_size(const NYX_MAP *map, size_t *size) {
-    if(!map)
-        return -1;
-    return nyx_list_size(map->keys, size);
+size_t nyx_map_size(const NYX_MAP *map) {
+    return nyx_list_size(map->keys);
 }
 
 void *nyx_map_key_by_index(const NYX_MAP *map, size_t idx) {
@@ -94,8 +92,16 @@ void *nyx_map_key_by_index(const NYX_MAP *map, size_t idx) {
     return nyx_list_get(map->keys, idx);
 }
 
+void *nyx_map_key_by_index_unsafe(const NYX_MAP *map, size_t idx) {
+    return nyx_list_get_unsafe(map->keys, idx);
+}
+
 void *nyx_map_value_by_index(const NYX_MAP *map, size_t idx) {
     if(!map)
         return 0;
     return nyx_list_get(map->values, idx);
+}
+
+void *nyx_map_value_by_index_unsafe(const NYX_MAP *map, size_t idx) {
+    return nyx_list_get_unsafe(map->values, idx);
 }

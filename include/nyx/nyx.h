@@ -11,6 +11,7 @@
 #include "nyx/font.h"
 #include "nyx/geom.h"
 #include "nyx/graphics.h"
+#include "nyx/kerning.h"
 #include "nyx/keyboard.h"
 #include "nyx/keycodes.h"
 #include "nyx/layer.h"
