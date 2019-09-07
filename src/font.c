@@ -66,7 +66,12 @@ static int add_glyph_mask(NYX_FONT *f, uint32_t code, NYX_MASK *mask) {
 
     if(!bits)
         return -1;
-    return add_glyph(f, code, mask->w, mask->h, bits);
+    if(add_glyph(f, code, mask->w, mask->h, bits))
+    {
+        free(bits);
+        return -1;
+    }
+    return 0;
 }
 
 static int add_glyphs(NYX_FONT *f, const NYX_BITMAP *bitmap, uint32_t from, uint32_t to) {
