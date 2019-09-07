@@ -10,8 +10,8 @@ int nyx_kill_font(int idx);
 int nyx_font_load(const char *path);
 int nyx_font_save(const char *path);
 
-int nyx_import_font(const char *path);
 int nyx_import_font_from_bitmap(const NYX_BITMAP *bitmap);
+int nyx_import_font(const char *path);
 
 int nyx_select_font(int idx);
 int nyx_active_font(void);

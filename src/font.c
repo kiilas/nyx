@@ -61,6 +61,8 @@ static int register_font(NYX_FONT *f) {
 }
 
 static int add_glyph(NYX_FONT *f, uint32_t code, int w, int h, void *bits) {
+    struct glyph glyph = {w, bits};
+
     if(h != f->glyph_h && f->glyph_h)
         return -1;
     if(f->monospaced)
@@ -70,7 +72,7 @@ static int add_glyph(NYX_FONT *f, uint32_t code, int w, int h, void *bits) {
         f->glyph_w = w;
     }
     f->glyph_h = h;
-    return _glyphmap_add(f->glyphs, code, w, bits);
+    return _glyphmap_add(f->glyphs, code, &glyph);
 }
 
 static int add_glyph_mask(NYX_FONT *f, uint32_t code, NYX_MASK *mask) {
@@ -131,36 +133,6 @@ static NYX_FONT *from_bitmap(const NYX_BITMAP *bitmap) {
     return f;
 }
 
-static int load_glyph(NYX_FONT *font, NYX_FILE *file, uint32_t *previous, bool first) {
-    uint32_t code;
-    int64_t offset;
-    int64_t width;
-    void *bits = 0;
-
-    if(nyx_file_read_upak(file, &offset))
-        return -1;
-    if(font->monospaced)
-        width = font->glyph_w;
-    else if(nyx_file_read_upak(file, &width))
-        return -1;
-    if(width)
-    {
-        bits = nyx_bits_alloc(width * font->glyph_h);
-        if(!bits)
-            return -1;
-        if(nyx_file_read_bits(file, bits, width * font->glyph_h))
-            goto fail;
-    }
-    code = first ? offset : *previous+offset+1;
-    *previous = code;
-    if(add_glyph(font, code, width, font->glyph_h, bits))
-        goto fail;
-    return 0;
-fail:
-    free(bits);
-    return -1;
-}
-
 static NYX_FONT *load(NYX_FILE *file) {
     NYX_FONT *font;
     char buf[4];
@@ -170,9 +142,6 @@ static NYX_FONT *load(NYX_FILE *file) {
     int64_t glyph_h;
     int64_t h_spacing;
     int64_t v_spacing;
-    int64_t num_glyphs;
-    uint32_t previous;
-    int64_t idx;
 
     if(nyx_file_read(file, buf, 4))
         return 0;
@@ -190,8 +159,7 @@ static NYX_FONT *load(NYX_FILE *file) {
        flags & FLAG_MONOSPACED && nyx_file_read_upak(file, &glyph_w) ||
        nyx_file_read_upak(file, &glyph_h) ||
        nyx_file_read_upak(file, &h_spacing) ||
-       nyx_file_read_upak(file, &v_spacing) ||
-       nyx_file_read_upak(file, &num_glyphs))
+       nyx_file_read_upak(file, &v_spacing))
         goto fail;
     if(flags & FLAG_MONOSPACED)
     {
@@ -203,9 +171,12 @@ static NYX_FONT *load(NYX_FILE *file) {
     font->glyph_h = glyph_h + 1;
     font->h_spacing = h_spacing;
     font->v_spacing = v_spacing;
-    for(idx=0; idx<num_glyphs; ++idx)
-        if(load_glyph(font, file, &previous, idx == 0))
-            goto fail;
+    if(_glyphmap_load(font->glyphs,
+                      file,
+                      font->glyph_w,
+                      font->glyph_h,
+                      font->monospaced))
+        goto fail;
     if(font->kerning && _load_kernings(font->kernings, file))
         goto fail;
     return font;
@@ -297,6 +268,15 @@ int nyx_font_save(const char *path) {
     return err;
 }
 
+int nyx_import_font_from_bitmap(const NYX_BITMAP *bitmap) {
+    NYX_FONT *f;
+
+    f = from_bitmap(bitmap);
+    if(!f)
+        return -1;
+    return register_font(f);
+}
+
 int nyx_import_font(const char *path) {
     NYX_BITMAP *bitmap;
     int idx;
@@ -307,15 +287,6 @@ int nyx_import_font(const char *path) {
     idx = nyx_import_font_from_bitmap(bitmap);
     nyx_destroy_bitmap(bitmap);
     return idx;
-}
-
-int nyx_import_font_from_bitmap(const NYX_BITMAP *bitmap) {
-    NYX_FONT *f;
-
-    f = from_bitmap(bitmap);
-    if(!f)
-        return -1;
-    return register_font(f);
 }
 
 int nyx_select_font(int idx) {
