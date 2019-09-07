@@ -3,8 +3,6 @@
 
 typedef struct NYX_FONT NYX_FONT;
 
-int nyx_register_font(NYX_FONT *f);
-
 int nyx_make_font(void);
 
 int nyx_kill_font(int idx);

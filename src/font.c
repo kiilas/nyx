@@ -48,6 +48,18 @@ fail:
     return 0;
 }
 
+static int register_font(NYX_FONT *f) {
+    int idx;
+
+    for(idx=0; idx<MAX_FONTS; ++idx)
+        if(!fonts[idx])
+            break;
+    if(idx == MAX_FONTS)
+        return -1;
+    fonts[idx] = f;
+    return idx;
+}
+
 static int add_glyph(NYX_FONT *f, uint32_t code, int w, int h, void *bits) {
     if(h != f->glyph_h && f->glyph_h)
         return -1;
@@ -74,7 +86,7 @@ static int add_glyph_mask(NYX_FONT *f, uint32_t code, NYX_MASK *mask) {
     return 0;
 }
 
-static int add_glyphs(NYX_FONT *f, const NYX_BITMAP *bitmap, uint32_t from, uint32_t to) {
+static int add_from_bitmap(NYX_FONT *f, const NYX_BITMAP *bitmap, uint32_t from, uint32_t to) {
     uint32_t border_color;
     uint32_t code;
     int x;
@@ -110,7 +122,7 @@ static NYX_FONT *from_bitmap(const NYX_BITMAP *bitmap) {
     f = init_font();
     if(!f)
         return 0;
-    if(add_glyphs(f, bitmap, 0x20, 0x7f))
+    if(add_from_bitmap(f, bitmap, 0x20, 0x7f))
     {
         destroy_font(f);
         return 0;
@@ -202,22 +214,40 @@ fail:
     return 0;
 }
 
+static int save(const NYX_FONT *font, NYX_FILE *file) {
+    uint8_t flags;
+    uint32_t num_glyphs;
+
+    flags = 0;
+    if(font->monospaced)
+        flags |= FLAG_MONOSPACED;
+    if(font->kerning)
+        flags |= FLAG_KERNING;
+    num_glyphs = _glyphmap_size(font->glyphs);
+    if(nyx_file_write_cstring(file, "nyxf", 4) ||
+       nyx_file_write_u32(file, FORMAT_VERSION) ||
+       nyx_file_write_u8(file, flags) ||
+       nyx_file_write_u32(file, font->replacement) ||
+       font->monospaced && nyx_file_write_upak(file, font->glyph_w - 1) ||
+       nyx_file_write_upak(file, font->glyph_h - 1) ||
+       nyx_file_write_upak(file, font->h_spacing) ||
+       nyx_file_write_upak(file, font->v_spacing))
+        return -1;
+    if(_glyphmap_save(font->glyphs,
+                      file,
+                      font->glyph_w,
+                      font->glyph_h,
+                      font->monospaced))
+        return -1;
+    if(font->kerning && _save_kernings(font->kernings, file))
+        return -1;
+    return 0;
+}
+
 NYX_FONT *_get_active_font(void) {
     if(active_font < 0)
         return 0;
     return fonts[active_font];
-}
-
-int nyx_register_font(NYX_FONT *f) {
-    int idx;
-
-    for(idx=0; idx<MAX_FONTS; ++idx)
-        if(!fonts[idx])
-            break;
-    if(idx == MAX_FONTS)
-        return -1;
-    fonts[idx] = f;
-    return idx;
 }
 
 int nyx_make_font(void) {
@@ -227,7 +257,7 @@ int nyx_make_font(void) {
     f = init_font();
     if(!f)
         return -1;
-    idx = nyx_register_font(f);
+    idx = register_font(f);
     if(idx < 0)
         destroy_font(f);
     return idx;
@@ -245,7 +275,7 @@ int nyx_font_load(const char *path) {
     nyx_file_close(file);
     if(!font)
         return -1;
-    idx = nyx_register_font(font);
+    idx = register_font(font);
     if(idx < 0)
         destroy_font(font);
     return idx;
@@ -255,58 +285,16 @@ int nyx_font_save(const char *path) {
     const NYX_FONT *font = _get_active_font();
 
     NYX_FILE *file;
-    uint8_t flags;
-    uint32_t num_glyphs;
-    uint32_t previous;
-    uint64_t idx;
+    int err;
 
     if(!font)
         return -1;
     file = nyx_file_open(path, NYX_FILE_WRITE, NYX_FILE_BIT);
     if(!file)
         return -1;
-    // TODO clean this shit up
-    nyx_file_write_cstring(file, "nyxf", 4);
-    nyx_file_write_u32(file, FORMAT_VERSION);
-    flags = 0;
-    if(font->monospaced)
-        flags |= FLAG_MONOSPACED;
-    if(font->kerning)
-        flags |= FLAG_KERNING;
-    nyx_file_write_u8(file, flags);
-    nyx_file_write_u32(file, font->replacement);
-    if(font->monospaced)
-        nyx_file_write_upak(file, font->glyph_w - 1);
-    nyx_file_write_upak(file, font->glyph_h - 1);
-    nyx_file_write_upak(file, font->h_spacing);
-    nyx_file_write_upak(file, font->v_spacing);
-    nyx_font_num_glyphs(&num_glyphs);
-    nyx_file_write_upak(file, num_glyphs);
-    for(idx=0; idx<num_glyphs; ++idx)
-    {
-        uint32_t code;
-        const void *bits;
-        int width;
-
-        nyx_font_code_by_index(idx, &code);
-        bits = nyx_glyph_bits(code);
-        width = nyx_glyph_width(code);
-        if(idx)
-            nyx_file_write_upak(file, code - previous - 1);
-        else
-            nyx_file_write_upak(file, code);
-        if(!font->monospaced)
-            nyx_file_write_upak(file, width);
-        nyx_file_write_bits(file, bits, width * font->glyph_h);
-        previous = code;
-    }
-    if(font->kerning && _save_kernings(font->kernings, file))
-        goto fail;
+    err = save(font, file);
     nyx_file_close(file);
-    return 0;
-fail:
-    nyx_file_close(file);
-    return -1;
+    return err;
 }
 
 int nyx_import_font(const char *path) {
@@ -327,7 +315,7 @@ int nyx_import_font_from_bitmap(const NYX_BITMAP *bitmap) {
     f = from_bitmap(bitmap);
     if(!f)
         return -1;
-    return nyx_register_font(f);
+    return register_font(f);
 }
 
 int nyx_select_font(int idx) {
@@ -448,14 +436,10 @@ int nyx_font_num_glyphs(uint32_t *num_glyphs) {
 
 int nyx_font_code_by_index(uint32_t idx, uint32_t *code) {
     const NYX_FONT *f = _get_active_font();
-    const void *key;
-    
+
     if(!f)
         return -1;
-    key = nyx_map_key_by_index(f->glyphs, idx);
-    if(!key)
-        return -1;
-    *code = nyx_bytes_to_u32(key);
+    *code = _glyphmap_code_by_index(f->glyphs, idx);
     return 0;
 }
 
