@@ -1,7 +1,10 @@
 #ifndef NYX_BIT_H
 #define NYX_BIT_H
 
+#include <stddef.h>
 #include <stdint.h>
+
+void *nyx_bits_alloc(size_t size);
 
 int nyx_get_bit_unsafe(const void *bits, uint64_t bit);
 int nyx_get_bit(const void *bits, uint64_t bits_len, uint64_t bit, int *value);

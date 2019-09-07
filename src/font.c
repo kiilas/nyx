@@ -5,6 +5,8 @@
 #include "_const.h"
 #include "_glyph.h"
 #include "_kerning.h"
+#include "_mask.h"
+#include "_sheet.h"
 
 #define MAX_FONTS 256
 
@@ -46,21 +48,7 @@ fail:
     return 0;
 }
 
-static int next_bitmap_glyph(const NYX_BITMAP *bitmap, uint32_t border_color, int *x, int *y) {
-    do
-        if(++*x == nyx_get_bitmap_width(bitmap))
-        {
-            if(++*y == nyx_get_bitmap_height(bitmap))
-                return 1;
-            *x = 0;
-        }
-    while(nyx_get_bitmap_pixel_unsafe(bitmap, *x, *y) == border_color ||
-          *x && nyx_get_bitmap_pixel_unsafe(bitmap, *x-1, *y) != border_color ||
-          *y && nyx_get_bitmap_pixel_unsafe(bitmap, *x, *y-1) != border_color);
-    return 0;
-}
-
-static int add_glyph_data(NYX_FONT *f, uint32_t code, int w, int h, void *bits) {
+static int add_glyph(NYX_FONT *f, uint32_t code, int w, int h, void *bits) {
     if(h != f->glyph_h && f->glyph_h)
         return -1;
     if(f->monospaced)
@@ -73,82 +61,37 @@ static int add_glyph_data(NYX_FONT *f, uint32_t code, int w, int h, void *bits) 
     return _glyphmap_add(f->glyphs, code, w, bits);
 }
 
-static void *glyph_bits(const NYX_BITMAP *bitmap, int x, int y, int w, int h) {
-    void *bits;
-    int cx;
-    int cy;
+static int add_glyph_mask(NYX_FONT *f, uint32_t code, NYX_MASK *mask) {
+    void *bits = nyx_mask_bits_copy(mask);
 
-    bits = malloc((w*h + 7) / 8);
-    if(!bits)
-        return 0;
-    for(cy=0; cy<h; ++cy)
-        for(cx=0; cx<w; ++cx)
-        {
-            bool value = nyx_get_bitmap_pixel_alpha_unsafe(bitmap, x+cx, y+cy) == 0xff;
-
-            nyx_set_bit_unsafe(bits, cx+cy*w, value);
-        }
-    return bits;
-}
-
-static int add_glyph_rect(NYX_FONT *f, const NYX_BITMAP *bitmap, int x, int y, int w, int h, uint32_t code) {
-    void *bits;
-    int res;
-
-    if(!f)
-        return -1;
-    if(!bitmap)
-        return -1;
-    bits = glyph_bits(bitmap, x, y, w, h);
     if(!bits)
         return -1;
-    res = add_glyph_data(f, code, w, h, bits);
-    if(res)
-        free(bits);
-    return res;
+    return add_glyph(f, code, mask->w, mask->h, bits);
 }
 
-static int add_glyph(NYX_FONT *f, const NYX_BITMAP *bitmap, uint32_t border_color, int x, int y, uint32_t code) {
-    int w = 1;
-    int h = 1;
-    int px;
-    int py;
-
-    if(!f)
-        return -1;
-    if(!bitmap)
-        return -1;
-    for(px=x; px<nyx_get_bitmap_width(bitmap); ++px)
-        if(nyx_get_bitmap_pixel_unsafe(bitmap, px, y) == border_color)
-            break;
-    w = px - x;
-    if(w <= 0)
-        return -1;
-    for(py=y; py<nyx_get_bitmap_height(bitmap); ++py)
-        if(nyx_get_bitmap_pixel_unsafe(bitmap, x, py) == border_color)
-            break;
-    h = py - y;
-    if(h <= 0)
-        return -1;
-    return add_glyph_rect(f, bitmap, x, y, w, h, code);
-}
-
-static int add_glyphs(NYX_FONT *f, const NYX_BITMAP *bitmap, uint32_t from) {
+static int add_glyphs(NYX_FONT *f, const NYX_BITMAP *bitmap, uint32_t from, uint32_t to) {
     uint32_t border_color;
-    uint32_t code = from;
+    uint32_t code;
     int x;
     int y;
 
-    if(!f)
-        return -1;
     if(nyx_get_bitmap_pixel(bitmap, 0, 0, &border_color))
         return -1;
     x = 0;
     y = 0;
-    while(!next_bitmap_glyph(bitmap, border_color, &x, &y))
-        if(add_glyph(f, bitmap, border_color, x, y, code++))
+    for(code=from; code<to; ++code)
+    {
+        NYX_MASK *mask = _sheet_mask(bitmap, border_color, &x, &y);
+        int err;
+
+        if(!mask)
             return -1;
-    return code - from;
+        err = add_glyph_mask(f, code, mask);
+        nyx_mask_destroy(mask);
+        if(err)
+            return -1;
+    }
+    return 0;
 }
 
 static void set_default_spacing(NYX_FONT *f) {
@@ -162,7 +105,7 @@ static NYX_FONT *from_bitmap(const NYX_BITMAP *bitmap) {
     f = init_font();
     if(!f)
         return 0;
-    if(add_glyphs(f, bitmap, 0x20) < 0)
+    if(add_glyphs(f, bitmap, 0x20, 0x7f))
     {
         destroy_font(f);
         return 0;
@@ -185,7 +128,7 @@ static int load_glyph(NYX_FONT *font, NYX_FILE *file, uint32_t *previous, bool f
         return -1;
     if(width)
     {
-        bits = malloc((width * font->glyph_h + 7) / 8);
+        bits = nyx_bits_alloc(width * font->glyph_h);
         if(!bits)
             return -1;
         if(nyx_file_read_bits(file, bits, width * font->glyph_h))
@@ -193,7 +136,7 @@ static int load_glyph(NYX_FONT *font, NYX_FILE *file, uint32_t *previous, bool f
     }
     code = first ? offset : *previous+offset+1;
     *previous = code;
-    if(add_glyph_data(font, code, width, font->glyph_h, bits))
+    if(add_glyph(font, code, width, font->glyph_h, bits))
         goto fail;
     return 0;
 fail:

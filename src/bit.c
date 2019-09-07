@@ -1,5 +1,9 @@
 #include "nyx/nyx.h"
 
+void *nyx_bits_alloc(size_t size) {
+    return malloc((size+7) / 8);
+}
+
 int nyx_get_bit_unsafe(const void *bits, uint64_t bit) {
     const uint8_t *byte = (uint8_t *)bits + bit/8;
 
