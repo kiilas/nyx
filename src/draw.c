@@ -1,10 +1,13 @@
 #include "nyx/nyx.h"
 
+#include "_font.h"
 #include "_graphics.h"
 #include "_layer.h"
 #include "_mask.h"
 #include "_pipeline.h"
+#include "_text.h"
 #include "_texture.h"
+#include "_unicode.h"
 
 void nyx_clear(void) {
     nyx_fill(nyx_get_background_color());
@@ -56,88 +59,54 @@ int nyx_draw_texturev(NYX_VECTOR v, int id) {
     return _pipeline_texture(v, id);
 }
 
-int nyx_draw_char(int32_t x, int32_t y, char c, NYX_COLOR color) {
-    return nyx_draw_unichar(x, y, (uint8_t)c, color);
-}
+int nyx_draw_char(int32_t x, int32_t y, uint32_t code, NYX_COLOR color) {
+    const NYX_FONT *font = _get_active_font();
 
-int nyx_draw_unichar(int32_t x, int32_t y, uint32_t code, NYX_COLOR color) {
-    const void *bits = nyx_glyph_bits(code);
-    int w;
-    int h;
-    NYX_MASK m;
-    NYX_VECTOR v;
-
-    if(nyx_active_font() < 0)
+    if(!font)
         return -1;
-    // if undefined glyph, try to render replacement glyph
-    if(!bits)
-    {
-        uint32_t replacement = nyx_replacement_glyph();
-        if(code != replacement)
-            return nyx_draw_unichar(x, y, replacement, color);
-        return -1;
-    }
-    w = nyx_glyph_width(code);
-    h = nyx_font_height();
-    v = nyx_vector(x, y);
-    m = (NYX_MASK){.w=w, .h=h, .bits=(void *)bits};
-    return _pipeline_mask(v, m, color);
+    return _text_draw_char(x, y, code, font, color);
 }
 
 int nyx_draw_cstring(int32_t x, int32_t y, const char *str, size_t n, NYX_COLOR color) {
-    size_t idx;
+    const NYX_FONT *font = _get_active_font();
+    struct text_stream stream;
+    size_t idx = 0;
 
-    for(idx=0; idx<n; ++idx)
+    if(!font)
+        return -1;
+    stream = _text_stream(x, y, 0, false);
+    while(idx < n)
     {
-        uint32_t code = str[idx];
+        uint32_t code;
 
+        if(_unicode_decode(str, n, &idx, &code))
+            return -1;
         if(!code)
             break;
-        if(idx)
-            x -= nyx_font_kerning_pair(str[idx-1], code);
-        if(nyx_draw_char(x, y, code, color))
+        if(_text_stream_draw_char(&stream, font, code, color))
             return -1;
-        x += nyx_glyph_width(code);
-        x += nyx_font_h_spacing();
     }
     return 0;
 }
 
 int nyx_draw_cstring_multiline(int32_t x, int32_t y, int wrap, const char *str, size_t n, NYX_COLOR color) {
-    size_t idx;
-    int pos_x = x;
-    int pos_y = y;
+    const NYX_FONT *font = _get_active_font();
+    struct text_stream stream;
+    size_t idx = 0;
 
-    for(idx=0; idx<n; ++idx)
+    if(!font)
+        return -1;
+    stream = _text_stream(x, y, wrap, true);
+    while(idx < n)
     {
-        uint32_t code = str[idx];
-        int width;
+        uint32_t code;
 
+        if(_unicode_decode(str, n, &idx, &code))
+            return -1;
         if(!code)
             break;
-        if(code == '\n')
-        {
-            pos_x = x;
-            pos_y += nyx_font_height();
-            pos_y += nyx_font_v_spacing();
-            continue;
-        }
-        // temporary workaround
-        if(code < 0x20)
-            continue;
-        if(idx)
-            pos_x -= nyx_font_kerning_pair(str[idx-1], code);
-        width = nyx_glyph_width(code);
-        if(wrap && pos_x+width>x+wrap && pos_x!=x)
-        {
-            pos_x = x;
-            pos_y += nyx_font_height();
-            pos_y += nyx_font_v_spacing();
-        }
-        if(nyx_draw_char(pos_x, pos_y, code, color))
+        if(_text_stream_draw_char(&stream, font, code, color))
             return -1;
-        pos_x += width;
-        pos_x += nyx_font_h_spacing();
     }
     return 0;
 }

@@ -47,7 +47,7 @@ void render_text() {
 void render(void) {
     nyx_clear();
     nyx_draw_char(100, 100, 'A', white);
-    nyx_draw_unichar(100, 150, 0x00000042, purple);
+    nyx_draw_char(100, 150, 0x00000042, purple);
     render_table();
     render_text();
 }

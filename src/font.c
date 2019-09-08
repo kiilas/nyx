@@ -86,9 +86,9 @@ static int add_glyph_mask(NYX_FONT *f, uint32_t code, NYX_MASK *mask) {
     return 0;
 }
 
-static int add_from_bitmap(NYX_FONT *f, const NYX_BITMAP *bitmap, uint32_t from, uint32_t to) {
+static int add_from_bitmap(NYX_FONT *f, const NYX_BITMAP *bitmap, int num_ranges, const uint32_t *range_pairs) {
     uint32_t border_color;
-    uint32_t code;
+    int range;
     int x;
     int y;
 
@@ -96,17 +96,24 @@ static int add_from_bitmap(NYX_FONT *f, const NYX_BITMAP *bitmap, uint32_t from,
         return -1;
     x = 0;
     y = 0;
-    for(code=from; code<to; ++code)
+    for(range=0; range<num_ranges; ++range)
     {
-        NYX_MASK *mask = _sheet_mask(bitmap, border_color, &x, &y);
-        int err;
+        uint32_t from = range_pairs[2*range];
+        uint32_t to = range_pairs[2*range + 1];
+        uint32_t code;
 
-        if(!mask)
-            return -1;
-        err = add_glyph_mask(f, code, mask);
-        nyx_mask_destroy(mask);
-        if(err)
-            return -1;
+        for(code=from; code<=to; ++code)
+        {
+            NYX_MASK *mask = _sheet_mask(bitmap, border_color, &x, &y);
+            int err;
+
+            if(!mask)
+                return -1;
+            err = add_glyph_mask(f, code, mask);
+            nyx_mask_destroy(mask);
+            if(err)
+                return -1;
+        }
     }
     return 0;
 }
@@ -122,7 +129,7 @@ static NYX_FONT *from_bitmap(const NYX_BITMAP *bitmap) {
     f = init_font();
     if(!f)
         return 0;
-    if(add_from_bitmap(f, bitmap, 0x20, 0x7f))
+    if(add_from_bitmap(f, bitmap, 1, (uint32_t[]){0x20, 0x7f}))
     {
         destroy_font(f);
         return 0;
@@ -217,6 +224,17 @@ NYX_FONT *_get_active_font(void) {
     return fonts[active_font];
 }
 
+int _font_mask_ptr(const NYX_FONT *font, uint32_t code, NYX_MASK *mask) {
+    struct glyph *glyph = _glyphmap_get(font->glyphs, code);
+
+    if(!glyph)
+        return -1;
+    mask->w = font->monospaced ? font->glyph_w : glyph->w;
+    mask->h = font->glyph_h;
+    mask->bits = glyph->bits;
+    return 0;
+}
+
 int nyx_make_font(void) {
     NYX_FONT *f;
     int idx;
@@ -274,15 +292,33 @@ int nyx_import_font_from_bitmap(const NYX_BITMAP *bitmap) {
 }
 
 int nyx_import_font(const char *path) {
-    NYX_BITMAP *bitmap;
+    NYX_BITMAP *bitmap = nyx_load_bitmap(path);
     int idx;
 
-    bitmap = nyx_load_bitmap(path);
     if(!bitmap)
         return -1;
     idx = nyx_import_font_from_bitmap(bitmap);
     nyx_destroy_bitmap(bitmap);
     return idx;
+}
+
+int nyx_font_import_glyphs_from_bitmap(const NYX_BITMAP *bitmap, int num_ranges, const uint32_t *range_pairs) {
+    NYX_FONT *font = _get_active_font();
+
+    if(!font)
+        return -1;
+    return add_from_bitmap(font, bitmap, num_ranges, range_pairs);
+}
+
+int nyx_font_import_glyphs(const char *path, int num_ranges, const uint32_t *range_pairs) {
+    NYX_BITMAP *bitmap = nyx_load_bitmap(path);
+    int err;
+
+    if(!bitmap)
+        return -1;
+    err = nyx_font_import_glyphs_from_bitmap(bitmap, num_ranges, range_pairs);
+    nyx_destroy_bitmap(bitmap);
+    return err;
 }
 
 int nyx_select_font(int idx) {

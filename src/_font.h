@@ -15,4 +15,6 @@ struct NYX_FONT {
 
 NYX_FONT *_get_active_font(void);
 
+int _font_mask_ptr(const NYX_FONT *font, uint32_t code, NYX_MASK *mask);
+
 #endif

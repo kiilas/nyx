@@ -25,6 +25,7 @@
 #include "nyx/symmetry.h"
 #include "nyx/texture.h"
 #include "nyx/transform.h"
+#include "nyx/unicode.h"
 #include "nyx/view.h"
 
 #endif
