@@ -24,7 +24,10 @@ int load(const char *path) {
     rewind(f);
     text = malloc(text_size);
     if(!text)
+    {
+        fclose(f);
         return -1;
+    }
     fread(text, 1, text_size, f);
     fclose(f);
     return 0;
