@@ -61,8 +61,6 @@ static int register_font(NYX_FONT *f) {
 }
 
 static int add_glyph(NYX_FONT *f, uint32_t code, int w, int h, void *bits) {
-    struct glyph glyph = {w, bits};
-
     if(h != f->glyph_h && f->glyph_h)
         return -1;
     if(f->monospaced)
@@ -72,7 +70,7 @@ static int add_glyph(NYX_FONT *f, uint32_t code, int w, int h, void *bits) {
         f->glyph_w = w;
     }
     f->glyph_h = h;
-    return _glyphmap_add(f->glyphs, code, &glyph);
+    return _glyphmap_add(f->glyphs, code, w, bits);
 }
 
 static int add_glyph_mask(NYX_FONT *f, uint32_t code, NYX_MASK *mask) {

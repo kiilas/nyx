@@ -26,6 +26,10 @@ void _glyph_destroy(struct glyph *glyph) {
     free(glyph);
 }
 
+void _glyph_destroy_keep_bits(struct glyph *glyph) {
+    free(glyph);
+}
+
 struct glyph *_glyph_load(NYX_FILE *file, int glyph_w, int glyph_h, bool monospaced) {
     struct glyph *glyph;
     int64_t width;
@@ -38,11 +42,11 @@ struct glyph *_glyph_load(NYX_FILE *file, int glyph_w, int glyph_h, bool monospa
     if(!glyph)
         return 0;
     if(width && nyx_file_read_bits(file, glyph->bits, width * glyph_h))
-        goto fail;
+    {
+        _glyph_destroy(glyph);
+        return 0;
+    }
     return glyph;
-fail:
-    _glyph_destroy(glyph);
-    return 0;
 }
 
 int _glyph_save(const struct glyph *glyph, NYX_FILE *file, int glyph_w, int glyph_h, bool monospaced) {
@@ -82,11 +86,12 @@ int _glyphmap_load(NYX_MAP *glyphs, NYX_FILE *file, int glyph_w, int glyph_h, bo
             return -1;
         code = idx ? previous+offset+1 : offset;
         previous = code;
-        if(_glyphmap_add(glyphs, code, glyph))
+        if(_glyphmap_add_glyph(glyphs, code, glyph))
         {
             _glyph_destroy(glyph);
             return -1;
         }
+        _glyph_destroy_keep_bits(glyph);
     }
     return 0;
 }
@@ -136,11 +141,19 @@ uint32_t _glyphmap_code_by_index(const NYX_MAP *glyphs, uint32_t idx) {
     return nyx_bytes_to_u32(key);
 }
 
-int _glyphmap_add(NYX_MAP *glyphs, uint32_t code, struct glyph *glyph) {
+int _glyphmap_add_glyph(NYX_MAP *glyphs, uint32_t code, struct glyph *glyph) {
     uint8_t key[4];
 
     nyx_u32_to_bytes(key, code);
     return nyx_map_insert(glyphs, key, glyph);
+}
+
+int _glyphmap_add(NYX_MAP *glyphs, uint32_t code, uint16_t w, void *bits) {
+    struct glyph glyph;
+
+    glyph.w = w;
+    glyph.bits = bits;
+    return _glyphmap_add_glyph(glyphs, code, &glyph);
 }
 
 int _glyphmap_exists(const NYX_MAP *glyphs, uint32_t code) {
