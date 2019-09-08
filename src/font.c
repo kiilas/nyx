@@ -185,14 +185,12 @@ fail:
 
 static int save(const NYX_FONT *font, NYX_FILE *file) {
     uint8_t flags;
-    uint32_t num_glyphs;
 
     flags = 0;
     if(font->monospaced)
         flags |= FLAG_MONOSPACED;
     if(font->kerning)
         flags |= FLAG_KERNING;
-    num_glyphs = _glyphmap_size(font->glyphs);
     if(nyx_file_write_cstring(file, "nyxf", 4) ||
        nyx_file_write_u32(file, FORMAT_VERSION) ||
        nyx_file_write_u8(file, flags) ||
