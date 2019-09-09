@@ -10,11 +10,15 @@ int nyx_kill_font(int idx);
 int nyx_font_load(const char *path);
 int nyx_font_save(const char *path);
 
-int nyx_import_font_from_bitmap(const NYX_BITMAP *bitmap);
-int nyx_import_font(const char *path);
+int nyx_font_import_from_bitmap(const NYX_BITMAP *bitmap, int num_ranges, const uint32_t *range_pairs);
+int nyx_font_import_ascii_from_bitmap(const NYX_BITMAP *bitmap);
+int nyx_font_glyphs_import_from_bitmap(const NYX_BITMAP *bitmap, int num_ranges, const uint32_t *range_pairs);
+int nyx_font_glyphs_import_ascii_from_bitmap(const NYX_BITMAP *bitmap);
 
-int nyx_font_import_glyphs_from_bitmap(const NYX_BITMAP *bitmap, int num_ranges, const uint32_t *range_pairs);
-int nyx_font_import_glyphs(const char *path, int num_ranges, const uint32_t *range_pairs);
+int nyx_font_import(const char *path, int num_ranges, uint32_t *range_pairs);
+int nyx_font_import_ascii(const char *path);
+int nyx_font_glyphs_import(const char *path, int num_ranges, const uint32_t *range_pairs);
+int nyx_font_glyphs_import_ascii(const char *path);
 
 int nyx_select_font(int idx);
 int nyx_active_font(void);

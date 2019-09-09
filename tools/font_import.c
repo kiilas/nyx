@@ -10,7 +10,7 @@ int main(int argc, char **argv) {
     }
     if(nyx_init())
         return -1;
-    font_id = nyx_import_font(argv[1]);
+    font_id = nyx_font_import_ascii(argv[1]);
     if(font_id < 0)
         return -1;
     nyx_select_font(font_id);

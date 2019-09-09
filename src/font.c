@@ -15,6 +15,8 @@
 #define FLAG_MONOSPACED 0x01
 #define FLAG_KERNING    0x02
 
+#define ASCII_RANGE ((uint32_t[]){0x20, 0x7f})
+
 static NYX_FONT *fonts[MAX_FONTS];
 
 static int active_font = -1;
@@ -22,7 +24,7 @@ static int active_font = -1;
 static float default_h_spacing = DEFAULT_FONT_H_SPACING;
 static float default_v_spacing = DEFAULT_FONT_V_SPACING;
 
-static void destroy_font(NYX_FONT *f) {
+static void font_destroy(NYX_FONT *f) {
     if(!f)
         return;
     nyx_destroy_map(f->glyphs);
@@ -44,7 +46,7 @@ static NYX_FONT *init_font(void) {
         goto fail;
     return f;
 fail:
-    destroy_font(f);
+    font_destroy(f);
     return 0;
 }
 
@@ -123,15 +125,14 @@ static void set_default_spacing(NYX_FONT *f) {
     f->v_spacing = 1 + f->glyph_h * default_v_spacing;
 }
 
-static NYX_FONT *from_bitmap(const NYX_BITMAP *bitmap) {
-    NYX_FONT *f;
+static NYX_FONT *from_bitmap(const NYX_BITMAP *bitmap, int num_ranges, const uint32_t *range_pairs) {
+    NYX_FONT *f = init_font();
 
-    f = init_font();
     if(!f)
         return 0;
-    if(add_from_bitmap(f, bitmap, 1, (uint32_t[]){0x20, 0x7f}))
+    if(add_from_bitmap(f, bitmap, num_ranges, range_pairs))
     {
-        destroy_font(f);
+        font_destroy(f);
         return 0;
     }
     set_default_spacing(f);
@@ -186,7 +187,7 @@ static NYX_FONT *load(NYX_FILE *file) {
         goto fail;
     return font;
 fail:
-    destroy_font(font);
+    font_destroy(font);
     return 0;
 }
 
@@ -244,7 +245,7 @@ int nyx_make_font(void) {
         return -1;
     idx = register_font(f);
     if(idx < 0)
-        destroy_font(f);
+        font_destroy(f);
     return idx;
 }
 
@@ -262,7 +263,7 @@ int nyx_font_load(const char *path) {
         return -1;
     idx = register_font(font);
     if(idx < 0)
-        destroy_font(font);
+        font_destroy(font);
     return idx;
 }
 
@@ -282,27 +283,23 @@ int nyx_font_save(const char *path) {
     return err;
 }
 
-int nyx_import_font_from_bitmap(const NYX_BITMAP *bitmap) {
-    NYX_FONT *f;
-
-    f = from_bitmap(bitmap);
-    if(!f)
-        return -1;
-    return register_font(f);
-}
-
-int nyx_import_font(const char *path) {
-    NYX_BITMAP *bitmap = nyx_load_bitmap(path);
+int nyx_font_import_from_bitmap(const NYX_BITMAP *bitmap, int num_ranges, const uint32_t *range_pairs) {
+    NYX_FONT *f = from_bitmap(bitmap, num_ranges, range_pairs);
     int idx;
 
-    if(!bitmap)
+    if(!f)
         return -1;
-    idx = nyx_import_font_from_bitmap(bitmap);
-    nyx_destroy_bitmap(bitmap);
+    idx = register_font(f);
+    if(idx < 0)
+        font_destroy(f);
     return idx;
 }
 
-int nyx_font_import_glyphs_from_bitmap(const NYX_BITMAP *bitmap, int num_ranges, const uint32_t *range_pairs) {
+int nyx_font_import_ascii_from_bitmap(const NYX_BITMAP *bitmap) {
+    return nyx_font_import_from_bitmap(bitmap, 1, ASCII_RANGE);
+}
+
+int nyx_font_glyphs_import_from_bitmap(const NYX_BITMAP *bitmap, int num_ranges, const uint32_t *range_pairs) {
     NYX_FONT *font = _get_active_font();
 
     if(!font)
@@ -310,15 +307,38 @@ int nyx_font_import_glyphs_from_bitmap(const NYX_BITMAP *bitmap, int num_ranges,
     return add_from_bitmap(font, bitmap, num_ranges, range_pairs);
 }
 
-int nyx_font_import_glyphs(const char *path, int num_ranges, const uint32_t *range_pairs) {
+int nyx_font_glyphs_import_ascii_from_bitmap(const NYX_BITMAP *bitmap) {
+    return nyx_font_glyphs_import_from_bitmap(bitmap, 1, ASCII_RANGE);
+}
+
+int nyx_font_import(const char *path, int num_ranges, uint32_t *range_pairs) {
+    NYX_BITMAP *bitmap = nyx_load_bitmap(path);
+    int idx;
+
+    if(!bitmap)
+        return -1;
+    idx = nyx_font_import_from_bitmap(bitmap, num_ranges, range_pairs);
+    nyx_destroy_bitmap(bitmap);
+    return idx;
+}
+
+int nyx_font_import_ascii(const char *path) {
+    return nyx_font_import(path, 1, ASCII_RANGE);
+}
+
+int nyx_font_glyphs_import(const char *path, int num_ranges, const uint32_t *range_pairs) {
     NYX_BITMAP *bitmap = nyx_load_bitmap(path);
     int err;
 
     if(!bitmap)
         return -1;
-    err = nyx_font_import_glyphs_from_bitmap(bitmap, num_ranges, range_pairs);
+    err = nyx_font_glyphs_import_from_bitmap(bitmap, num_ranges, range_pairs);
     nyx_destroy_bitmap(bitmap);
     return err;
+}
+
+int nyx_font_glyphs_import_ascii(const char *path) {
+    return nyx_font_glyphs_import(path, 1, ASCII_RANGE);
 }
 
 int nyx_select_font(int idx) {
