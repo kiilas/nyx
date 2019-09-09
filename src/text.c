@@ -4,6 +4,7 @@
 #include "_mask.h"
 #include "_pipeline.h"
 #include "_text.h"
+#include "_unicode.h"
 
 struct text_stream _text_stream(int32_t left, int32_t top, int wrap, bool multiline) {
     return (struct text_stream) {.left=left,
@@ -57,4 +58,27 @@ int _text_stream_draw_char(struct text_stream *stream, const NYX_FONT *font, uin
     stream->x += mask.w + font->h_spacing;
     stream->prev = code;
     return 0;
+}
+
+int _text_stream_draw_string(struct text_stream *stream, const NYX_FONT *font, bool nullterm, const char *str, size_t size, NYX_COLOR color) {
+    size_t idx = 0;
+
+    while(idx < size)
+    {
+        uint32_t code;
+
+        if(_unicode_decode(str, size, &idx, &code))
+            return -1;
+        if(!code && nullterm)
+            break;
+        if(_text_stream_draw_char(stream, font, code, color))
+            return -1;
+    }
+    return 0;
+}
+
+int _text_draw_string(const NYX_FONT *font, int32_t x, int32_t y, int wrap, bool multiline, bool nullterm, const char *str, size_t size, NYX_COLOR color) {
+    struct text_stream stream = _text_stream(x, y, wrap, multiline);
+
+    return _text_stream_draw_string(&stream, font, nullterm, str, size, color);
 }

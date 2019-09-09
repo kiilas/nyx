@@ -3,11 +3,9 @@
 #include "_font.h"
 #include "_graphics.h"
 #include "_layer.h"
-#include "_mask.h"
 #include "_pipeline.h"
 #include "_text.h"
 #include "_texture.h"
-#include "_unicode.h"
 
 void nyx_clear(void) {
     nyx_fill(nyx_get_background_color());
@@ -67,46 +65,27 @@ int nyx_draw_char(int32_t x, int32_t y, uint32_t code, NYX_COLOR color) {
     return _text_draw_char(x, y, code, font, color);
 }
 
-int nyx_draw_cstring(int32_t x, int32_t y, const char *str, size_t n, NYX_COLOR color) {
+static int draw_string(int32_t x, int32_t y, int wrap, bool multiline, bool nullterm, const char *str, size_t size, NYX_COLOR color) {
     const NYX_FONT *font = _get_active_font();
-    struct text_stream stream;
-    size_t idx = 0;
 
     if(!font)
         return -1;
-    stream = _text_stream(x, y, 0, false);
-    while(idx < n)
-    {
-        uint32_t code;
-
-        if(_unicode_decode(str, n, &idx, &code))
-            return -1;
-        if(!code)
-            break;
-        if(_text_stream_draw_char(&stream, font, code, color))
-            return -1;
-    }
-    return 0;
+    return _text_draw_string(font, x, y, wrap, multiline,
+                             nullterm, str, size, color);
 }
 
-int nyx_draw_cstring_multiline(int32_t x, int32_t y, int wrap, const char *str, size_t n, NYX_COLOR color) {
-    const NYX_FONT *font = _get_active_font();
-    struct text_stream stream;
-    size_t idx = 0;
+int nyx_draw_string(int32_t x, int32_t y, const char *str, size_t size, NYX_COLOR color) {
+    return draw_string(x, y, 0, false, false, str, size, color);
+}
 
-    if(!font)
-        return -1;
-    stream = _text_stream(x, y, wrap, true);
-    while(idx < n)
-    {
-        uint32_t code;
+int nyx_draw_string_multiline(int32_t x, int32_t y, int wrap, const char *str, size_t size, NYX_COLOR color) {
+    return draw_string(x, y, wrap, true, false, str, size, color);
+}
 
-        if(_unicode_decode(str, n, &idx, &code))
-            return -1;
-        if(!code)
-            break;
-        if(_text_stream_draw_char(&stream, font, code, color))
-            return -1;
-    }
-    return 0;
+int nyx_draw_cstring(int32_t x, int32_t y, const char *str, size_t max_size, NYX_COLOR color) {
+    return draw_string(x, y, 0, false, true, str, max_size, color);
+}
+
+int nyx_draw_cstring_multiline(int32_t x, int32_t y, int wrap, const char *str, size_t max_size, NYX_COLOR color) {
+    return draw_string(x, y, wrap, true, true, str, max_size, color);
 }
