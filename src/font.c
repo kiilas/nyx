@@ -192,9 +192,8 @@ fail:
 }
 
 static int save(const NYX_FONT *font, NYX_FILE *file) {
-    uint8_t flags;
+    uint8_t flags = 0;
 
-    flags = 0;
     if(font->monospaced)
         flags |= FLAG_MONOSPACED;
     if(font->kerning)
