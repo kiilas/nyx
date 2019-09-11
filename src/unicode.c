@@ -50,6 +50,14 @@ int _unicode_decode(const char *str, size_t n, size_t *idx, uint32_t *code) {
     return -1;
 }
 
+bool _unicode_is_whitespace(uint32_t code) {
+    return code == 0x20 || code == '\t'; // hack
+}
+
+bool _unicode_is_word_char(uint32_t code) {
+    return code > 0x20; // hack
+}
+
 int nyx_unicode_decode(const char *str, size_t n, size_t *idx, uint32_t *code) {
     if(*idx >= n)
         return -1;
