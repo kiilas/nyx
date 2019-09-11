@@ -157,10 +157,6 @@ static int stream_draw_char(uint32_t code) {
     if(wrapped && _unicode_is_whitespace(code))
         return 0;
 
-    // determine if we're pushing to word buffer or drawing
-    // we push to word buffer if word_buf, no overflow
-    // if buffer is full, we flush it and set overflow so we draw
-
     // if word buffer full, flush it and mark overflow
     if(word_buf_size == TEXT_WORD_BUF_SIZE)
     {
