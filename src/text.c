@@ -171,7 +171,7 @@ static int stream_draw_char(uint32_t code) {
         word_buf[word_buf_size++] = (struct word_buf_item){stream_x, code};
     else
     {
-        NYX_VECTOR v = nyx_vector(stream_left+stream_x, stream_top, stream_y);
+        NYX_VECTOR v = nyx_vector(stream_left+stream_x, stream_top+stream_y);
 
         if(_pipeline_mask(v, mask, stream_color))
             return -1;
