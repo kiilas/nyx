@@ -196,7 +196,8 @@ static int stream_draw_string(bool nullterm, const char *str, size_t size) {
         if(stream_draw_char(code))
             return -1;
     }
-    word_buf_flush();
+    if(word_buf_flush())
+        return -1;
     return 0;
 }
 
