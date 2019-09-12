@@ -91,13 +91,11 @@ static int add_glyph_mask(NYX_FONT *f, uint32_t code, NYX_MASK *mask) {
 static int add_from_bitmap(NYX_FONT *f, const NYX_BITMAP *bitmap, int num_ranges, const uint32_t *range_pairs) {
     uint32_t border_color;
     int range;
-    int x;
-    int y;
+    int x = 0;
+    int y = 0;
 
     if(nyx_get_bitmap_pixel(bitmap, 0, 0, &border_color))
         return -1;
-    x = 0;
-    y = 0;
     for(range=0; range<num_ranges; ++range)
     {
         uint32_t from = range_pairs[2*range];
