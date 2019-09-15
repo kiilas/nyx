@@ -10,6 +10,7 @@
 #include "nyx/file.h"
 #include "nyx/font.h"
 #include "nyx/geom.h"
+#include "nyx/glyph.h"
 #include "nyx/graphics.h"
 #include "nyx/kerning.h"
 #include "nyx/keyboard.h"

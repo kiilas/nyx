@@ -1,6 +1,8 @@
 #ifndef NYX__FONT_H
 #define NYX__FONT_H
 
+#define ASCII_RANGE ((uint32_t[]){0x20, 0x7f})
+
 struct NYX_FONT {
     uint32_t replacement;
     uint16_t glyph_w;
