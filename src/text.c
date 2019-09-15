@@ -1,5 +1,3 @@
-// TODO this code is a spaghetti mess, clean it up
-
 #include "nyx/nyx.h"
 
 #include "_const.h"
@@ -40,17 +38,16 @@ int _text_draw_char(int32_t x, int32_t y, uint32_t code, const NYX_FONT *font, N
     return _pipeline_mask(v, mask, color);
 }
 
-static void reset_stream(void) {
-    stream_x = 0;
-    stream_y = 0;
-    stream_prev = 0;
+static void word_buf_clear(void) {
     word_buf_size = 0;
     word_buf_overflow = false;
 }
 
-static void word_buf_clear(void) {
-    word_buf_size = 0;
-    word_buf_overflow = false;
+static void reset_stream(void) {
+    stream_x = 0;
+    stream_y = 0;
+    stream_prev = 0;
+    word_buf_clear();
 }
 
 static int word_buf_flush(void) {
@@ -67,19 +64,24 @@ static int word_buf_flush(void) {
     return 0;
 }
 
+static int stream_newline(int32_t x) {
+    if(!stream_multiline)
+        return -1;
+    stream_x = x;
+    stream_y += stream_font->glyph_h + stream_font->v_spacing;
+    stream_prev = 0;
+    return 0;
+}
+
 static int wrap(bool *wrapped) {
     int32_t buf_x = word_buf_size ? word_buf[0].x : stream_x;
 
     if(!buf_x && word_buf_size)
     {
-        // flush buffer
         if(word_buf_flush())
             return -1;
-
-        // new line
-        stream_x = 0;
-        stream_y += stream_font->glyph_h + stream_font->v_spacing;
-        stream_prev = 0;
+        if(stream_newline(0))
+            return -1;
         *wrapped = true;
     }
     else if(buf_x)
@@ -88,11 +90,8 @@ static int wrap(bool *wrapped) {
 
         for(i=0; i<word_buf_size; ++i)
             word_buf[i].x -= buf_x;
-
-        // new line
-        stream_x -= buf_x;
-        stream_y += stream_font->glyph_h + stream_font->v_spacing;
-        stream_prev = 0;
+        if(stream_newline(stream_x - buf_x))
+            return -1;
         *wrapped = true;
     }
     else
@@ -100,19 +99,10 @@ static int wrap(bool *wrapped) {
     return 0;
 }
 
-static int stream_newline(void) {
-    if(!stream_multiline)
-        return -1;
-    stream_x = 0;
-    stream_y += stream_font->glyph_h + stream_font->v_spacing;
-    stream_prev = 0;
-    return 0;
-}
-
 static int stream_draw_newline(void) {
     if(word_buf_flush())
         return -1;
-    if(stream_newline())
+    if(stream_newline(0))
         return -1;
     return 0;
 }
