@@ -232,7 +232,6 @@ int nyx_font_kerning_auto_pair(uint32_t prev, uint32_t next) {
     const struct glyph *next_glyph;
     int font_height;
     int max_gap;
-    int offset;
     int y;
 
     if(!f)
@@ -252,8 +251,7 @@ int nyx_font_kerning_auto_pair(uint32_t prev, uint32_t next) {
         if(gap < max_gap)
             max_gap = gap;
     }
-    offset = max_gap>f->h_spacing ? f->h_spacing : max_gap;
-    return pair_set(f->kernings, prev, next, offset);
+    return pair_set(f->kernings, prev, next, max_gap);
 }
 
 int nyx_font_kerning_auto_range(uint32_t prev_min, uint32_t prev_max, uint32_t next_min, uint32_t next_max) {
