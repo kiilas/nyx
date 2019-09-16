@@ -100,6 +100,13 @@ void nyx_list_set_unsafe(NYX_LIST *list, size_t idx, const void *elem) {
     memcpy(nyx_list_get_unsafe(list, idx), elem, list->elem_size);
 }
 
+int nyx_list_add(NYX_LIST *list, const void *elem) {
+    if(grow(list))
+        return -1;
+    nyx_list_set_unsafe(list, list->len - 1, elem);
+    return 0;
+}
+
 int nyx_list_insert(NYX_LIST *list, size_t idx, const void *elem) {
     if(!list)
         return -1;
@@ -110,7 +117,7 @@ int nyx_list_insert(NYX_LIST *list, size_t idx, const void *elem) {
     memmove(nyx_list_get_unsafe(list, idx + 1),
             nyx_list_get_unsafe(list, idx),
             (list->len-idx-1) * list->elem_size);
-    memcpy(nyx_list_get_unsafe(list, idx), elem, list->elem_size);
+    nyx_list_set_unsafe(list, idx, elem);
     return 0;
 }
 

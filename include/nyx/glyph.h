@@ -1,6 +1,7 @@
 #ifndef NYX_GLYPH_H
 #define NYX_GLYPH_H
 
+int nyx_font_glyphs_import_from_bitmap_xy(const NYX_BITMAP *bitmap, uint32_t from, uint32_t to, int *x, int *y);
 int nyx_font_glyphs_import_from_bitmap(const NYX_BITMAP *bitmap, int num_ranges, const uint32_t *range_pairs);
 int nyx_font_glyphs_import_ascii_from_bitmap(const NYX_BITMAP *bitmap);
 int nyx_font_glyphs_import(const char *path, int num_ranges, const uint32_t *range_pairs);

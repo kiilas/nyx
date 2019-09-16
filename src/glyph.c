@@ -201,6 +201,27 @@ static int add_glyph_mask(NYX_FONT *f, uint32_t code, NYX_MASK *mask) {
     return 0;
 }
 
+static int font_add_from_bitmap_xy(NYX_FONT *font, const NYX_BITMAP *bitmap, uint32_t from, uint32_t to, int *x, int *y) {
+    uint32_t border_color;
+    uint32_t code;
+
+    if(nyx_get_bitmap_pixel(bitmap, 0, 0, &border_color))
+        return -1;
+    for(code=from; code<=to; ++code)
+    {
+        NYX_MASK *mask = _sheet_mask(bitmap, border_color, x, y);
+        int err;
+
+        if(!mask)
+            return -1;
+        err = add_glyph_mask(font, code, mask);
+        nyx_mask_destroy(mask);
+        if(err)
+            return -1;
+    }
+    return 0;
+}
+
 int _font_add_from_bitmap(NYX_FONT *font, const NYX_BITMAP *bitmap, int num_ranges, const uint32_t *range_pairs) {
     uint32_t border_color;
     int range;
@@ -213,22 +234,19 @@ int _font_add_from_bitmap(NYX_FONT *font, const NYX_BITMAP *bitmap, int num_rang
     {
         uint32_t from = range_pairs[2*range];
         uint32_t to = range_pairs[2*range + 1];
-        uint32_t code;
 
-        for(code=from; code<=to; ++code)
-        {
-            NYX_MASK *mask = _sheet_mask(bitmap, border_color, &x, &y);
-            int err;
-
-            if(!mask)
-                return -1;
-            err = add_glyph_mask(font, code, mask);
-            nyx_mask_destroy(mask);
-            if(err)
-                return -1;
-        }
+        if(font_add_from_bitmap_xy(font, bitmap, from, to, &x, &y))
+            return -1;
     }
     return 0;
+}
+
+int nyx_font_glyphs_import_from_bitmap_xy(const NYX_BITMAP *bitmap, uint32_t from, uint32_t to, int *x, int *y) {
+    NYX_FONT *font = _get_active_font();
+
+    if(!font)
+        return -1;
+    return font_add_from_bitmap_xy(font, bitmap, from, to, x, y);
 }
 
 int nyx_font_glyphs_import_from_bitmap(const NYX_BITMAP *bitmap, int num_ranges, const uint32_t *range_pairs) {

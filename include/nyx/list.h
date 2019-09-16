@@ -10,6 +10,7 @@ void *nyx_list_get(const NYX_LIST *list, size_t idx);
 void *nyx_list_get_unsafe(const NYX_LIST *list, size_t idx);
 void nyx_list_set_unsafe(NYX_LIST *list, size_t idx, const void *elem);
 
+int nyx_list_add(NYX_LIST *list, const void *elem);
 int nyx_list_insert(NYX_LIST *list, size_t idx, const void *elem);
 int nyx_list_insert_sorted(NYX_LIST *list, const void *elem);
 int nyx_list_insert_sorted_unique(NYX_LIST *list, const void *elem);

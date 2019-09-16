@@ -317,6 +317,15 @@ int nyx_set_font_spacing(int16_t spacing) {
     return 0;
 }
 
+int nyx_set_font_spacing_auto(void) {
+    NYX_FONT *f = _get_active_font();
+
+    if(!f)
+        return -1;
+    set_default_spacing(f);
+    return 0;
+}
+
 uint32_t nyx_replacement_glyph() {
     NYX_FONT *f = _get_active_font();
 

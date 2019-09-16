@@ -24,6 +24,7 @@ int nyx_font_v_spacing(void);
 int nyx_set_font_h_spacing(int16_t h_spacing);
 int nyx_set_font_v_spacing(int16_t v_spacing);
 int nyx_set_font_spacing(int16_t spacing);
+int nyx_set_font_spacing_auto(void);
 
 uint32_t nyx_replacement_glyph(void);
 int nyx_set_replacement_glyph(uint32_t code);
