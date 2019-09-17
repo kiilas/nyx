@@ -5,12 +5,6 @@
 
 #include <assert.h>
 
-struct NYX_KERNING_PAIR {
-    uint32_t prev;
-    uint32_t next;
-    int16_t  offset;
-};
-
 static int pair_set(NYX_MAP *kernings, uint32_t prev, uint32_t next, int16_t offset) {
     uint8_t key[8];
     uint8_t value[2];
@@ -157,6 +151,15 @@ int nyx_font_set_kerning(int kerning) {
     return 0;
 }
 
+int nyx_font_kerning_clear(void) {
+    NYX_FONT *f = _get_active_font();
+
+    if(!f)
+        return -1;
+    nyx_map_clear(f->kernings);
+    return 0;
+}
+
 int nyx_font_kerning_num_pairs(size_t *pairs)
 {
     NYX_FONT *f = _get_active_font();
@@ -232,6 +235,7 @@ int nyx_font_kerning_auto_pair(uint32_t prev, uint32_t next) {
     const struct glyph *next_glyph;
     int font_height;
     int max_gap;
+    int offset;
     int y;
 
     if(!f)
@@ -251,7 +255,8 @@ int nyx_font_kerning_auto_pair(uint32_t prev, uint32_t next) {
         if(gap < max_gap)
             max_gap = gap;
     }
-    return pair_set(f->kernings, prev, next, max_gap);
+    offset = max_gap>f->h_spacing ? f->h_spacing : max_gap;
+    return pair_set(f->kernings, prev, next, offset);
 }
 
 int nyx_font_kerning_auto_range(uint32_t prev_min, uint32_t prev_max, uint32_t next_min, uint32_t next_max) {

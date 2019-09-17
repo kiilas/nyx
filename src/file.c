@@ -401,3 +401,21 @@ int nyx_file_write_cstring(NYX_FILE *file, const char *str, size_t n) {
 
     return nyx_file_write(file, str, len);
 }
+
+int nyx_file_write_unichar(NYX_FILE *file, uint32_t code) {
+    char buffer[4];
+    size_t idx = 0;
+
+    if(nyx_unicode_encode(buffer, 4, &idx, code))
+        return -1;
+    return nyx_file_write(file, buffer, idx);
+}
+
+int nyx_file_write_decimal(NYX_FILE *file, int64_t i) {
+    char buffer[24];
+    size_t size = snprintf(buffer, 24, "%"PRId64, i);
+
+    if(size < 0)
+        return -1;
+    return nyx_file_write(file, buffer, size);
+}

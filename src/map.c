@@ -67,19 +67,21 @@ int nyx_map_insert(const NYX_MAP *map, const void *key, const void *value) {
     return 0;
 }
 
-int nyx_map_remove(NYX_MAP *map, const void *key) {
+void nyx_map_remove(NYX_MAP *map, const void *key) {
     size_t idx;
     int exists;
 
-    if(!map)
-        return -1;
     idx = _nyx_list_index_sorted(map->keys, key, &exists);
     if(exists)
     {
         nyx_list_remove(map->keys, idx);
         nyx_list_remove(map->values, idx);
     }
-    return 0;
+}
+
+void nyx_map_clear(NYX_MAP *map) {
+    nyx_list_clear(map->keys);
+    nyx_list_clear(map->values);
 }
 
 size_t nyx_map_size(const NYX_MAP *map) {

@@ -4,6 +4,7 @@
 #define NYX_FILE_READ   0
 #define NYX_FILE_WRITE  1
 #define NYX_FILE_APPEND 2
+
 #define NYX_FILE_BYTE   0
 #define NYX_FILE_BIT    1
 
@@ -34,6 +35,8 @@ int nyx_file_read_u64(NYX_FILE *file, uint64_t *u64);
 int nyx_file_read_ipak(NYX_FILE *file, int64_t *i);
 int nyx_file_read_upak(NYX_FILE *file, int64_t *i);
 int nyx_file_read_cstring(NYX_FILE *file, char *str, size_t n);
+int nyx_file_read_unichar(NYX_FILE *file, uint32_t *code);
+int nyx_file_read_decimal(NYX_FILE *file, int64_t *i);
 
 int nyx_file_write_i8(NYX_FILE *file, int8_t i8);
 int nyx_file_write_u8(NYX_FILE *file, uint8_t u8);
@@ -46,5 +49,7 @@ int nyx_file_write_u64(NYX_FILE *file, uint64_t u64);
 int nyx_file_write_ipak(NYX_FILE *file, int64_t i);
 int nyx_file_write_upak(NYX_FILE *file, int64_t i);
 int nyx_file_write_cstring(NYX_FILE *file, const char *str, size_t n);
+int nyx_file_write_unichar(NYX_FILE *file, uint32_t code);
+int nyx_file_write_decimal(NYX_FILE *file, int64_t i);
 
 #endif

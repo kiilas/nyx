@@ -143,8 +143,6 @@ int nyx_list_insert_sorted_unique(NYX_LIST *list, const void *elem) {
 }
 
 int nyx_list_remove(NYX_LIST *list, size_t idx) {
-    if(!list)
-        return -1;
     if(idx >= list->len)
         return -1;
     --list->len;
@@ -152,6 +150,10 @@ int nyx_list_remove(NYX_LIST *list, size_t idx) {
             nyx_list_get_unsafe(list, idx+1),
             (list->len-idx) * list->elem_size);
     return 0;
+}
+
+void nyx_list_clear(NYX_LIST *list) {
+    list->len = 0;
 }
 
 size_t nyx_list_size(const NYX_LIST *list) {

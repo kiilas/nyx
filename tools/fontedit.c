@@ -1,20 +1,24 @@
 #include "nyx/nyx.h"
 
-#define NONE          0
-#define OUTPUT        1
-#define IMPORT        2
-#define GLYPH         3
-#define GLYPH_RANGE   4
-#define REPLACEMENT   5
+#define NONE            0
+#define OUTPUT          1
+#define IMPORT          2
+#define GLYPH           3
+#define GLYPH_RANGE     4
+#define REPLACEMENT     5
 
-#define SPACING      10
-#define H_SPACING    11
-#define V_SPACING    12
-#define SPACING_AUTO 13
+#define SPACING        10
+#define H_SPACING      11
+#define V_SPACING      12
+#define SPACING_AUTO   13
 
-#define KERNING_AUTO 20
+#define KERNING_CLEAR  20
+#define KERNING_ADD    21
+#define KERNING_IMPORT 22
+#define KERNING_EXPORT 23
+#define KERNING_AUTO   24
 
-#define EXPR_ARGS 2
+#define EXPR_ARGS 3
 
 static int font_id;
 
@@ -157,12 +161,88 @@ static void auto_spacing(void) {
         printf("Warning: could not set automatic spacing\n");
 }
 
-static void auto_kerning(void) {
+static void kerning_clear(void) {
+    if(nyx_font_kerning_clear())
+    {
+        printf("Error: couldn't clear kerning data\n");
+        exit(-1);
+    }
+}
+
+static void enable_kerning(void) {
     if(nyx_font_set_kerning(1))
     {
         printf("Error: couldn't enable kerning\n");
         exit(-1);
     }
+}
+
+static void kerning_add(const char *arg_prev, const char *arg_next, const char *arg_offset) {
+    uint32_t prev = to_code(arg_prev);
+    uint32_t next = to_code(arg_next);
+    int offset = to_int(arg_offset);
+
+    enable_kerning();
+    if(nyx_font_kerning_pair_set(prev, next, offset))
+    {
+        printf("Error: couldn't add kerning pair: %x %x %d\n",
+               prev,
+               next,
+               offset);
+        exit(-1);
+    }
+}
+
+static void kerning_import(const char *path) {
+    // TODO
+    printf("%s\n", path);
+}
+
+static void kerning_export(const char *path) {
+    NYX_FILE *out;
+    size_t num_pairs;
+    size_t i;
+
+    if(!nyx_font_kerning())
+    {
+        printf("Warning: no kerning data to export, aborting\n");
+        return;
+    }
+    out = nyx_file_open(path, NYX_FILE_WRITE, NYX_FILE_BYTE);
+    if(!out)
+    {
+        printf("Error opening file for writing: %s\n", path);
+        exit(-1);
+    }
+    if(nyx_font_kerning_num_pairs(&num_pairs))
+    {
+        printf("Error accessing kerning pairs\n");
+        exit(-1);
+    }
+    for(i=0; i<num_pairs; ++i)
+    {
+        NYX_KERNING_PAIR pair;
+
+        if(nyx_font_kerning_pair_by_index(i, &pair))
+        {
+            printf("Error reading kerning pair #%zu\n", i);
+            exit(-1);
+        }
+        if(nyx_file_write_unichar(out, pair.prev) ||
+           nyx_file_write_unichar(out, pair.next) ||
+           nyx_file_write_u8(out, ' ') ||
+           nyx_file_write_decimal(out, pair.offset) ||
+           i+1 < num_pairs && nyx_file_write_u8(out, '\n'))
+        {
+            printf("Error writing to file: %s\n", path);
+            exit(-1);
+        }
+    }
+    nyx_file_close(out);
+}
+
+static void auto_kerning(void) {
+    enable_kerning();
     if(auto_kerning_ranges)
         nyx_destroy_list(auto_kerning_ranges);
     auto_kerning_ranges = nyx_list_init(4);
@@ -220,6 +300,26 @@ static int get_cmd(const char *arg) {
         cmd = SPACING_AUTO;
         num_args = 0;
     }
+    else if(!strcmp(arg, "-C"))
+    {
+        cmd = KERNING_CLEAR;
+        num_args = 0;
+    }
+    else if(!strcmp(arg, "-k"))
+    {
+        cmd = KERNING_ADD;
+        num_args = 3;
+    }
+    else if(!strcmp(arg, "-I"))
+    {
+        cmd = KERNING_IMPORT;
+        num_args = 1;
+    }
+    else if(!strcmp(arg, "-E"))
+    {
+        cmd = KERNING_EXPORT;
+        num_args = 1;
+    }
     else if(!strcmp(arg, "-K"))
     {
         cmd = KERNING_AUTO;
@@ -249,6 +349,14 @@ static void process_cmd(void) {
         v_spacing(cmd_args[0]);
     else if(cmd == SPACING_AUTO)
         auto_spacing();
+    else if(cmd == KERNING_CLEAR)
+        kerning_clear();
+    else if(cmd == KERNING_ADD)
+        kerning_add(cmd_args[0], cmd_args[1], cmd_args[2]);
+    else if(cmd == KERNING_IMPORT)
+        kerning_import(cmd_args[0]);
+    else if(cmd == KERNING_EXPORT)
+        kerning_export(cmd_args[0]);
     else if(cmd == KERNING_AUTO)
         auto_kerning();
 }

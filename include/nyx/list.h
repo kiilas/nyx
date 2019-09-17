@@ -16,6 +16,7 @@ int nyx_list_insert_sorted(NYX_LIST *list, const void *elem);
 int nyx_list_insert_sorted_unique(NYX_LIST *list, const void *elem);
 
 int nyx_list_remove(NYX_LIST *list, size_t idx);
+void nyx_list_clear(NYX_LIST *list);
 
 size_t nyx_list_size(const NYX_LIST *list);
 

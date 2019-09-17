@@ -1,10 +1,17 @@
 #ifndef NYX_KERNING_H
 #define NYX_KERNING_H
 
-typedef struct NYX_KERNING_PAIR NYX_KERNING_PAIR;
+typedef struct NYX_KERNING_PAIR {
+    uint32_t prev;
+    uint32_t next;
+    int16_t  offset;
+} NYX_KERNING_PAIR;
 
 int nyx_font_kerning(void);
 int nyx_font_set_kerning(int kerning);
+
+int nyx_font_kerning_clear(void);
+
 int nyx_font_kerning_num_pairs(size_t *pairs);
 int nyx_font_kerning_pair(uint32_t prev, uint32_t next);
 int nyx_font_kerning_pair_set(uint32_t prev, uint32_t next, int16_t offset);
